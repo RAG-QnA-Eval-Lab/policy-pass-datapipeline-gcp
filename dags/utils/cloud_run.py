@@ -40,8 +40,13 @@ def restart_cloud_run_service(
         f"FORCE_RESTART={_timestamp()}",
     ]
 
+    import os
+    env = os.environ.copy()
+    if not env.get("HOME", "").startswith("/home"):
+        env["HOME"] = "/root"
+
     try:
-        subprocess.run(cmd, capture_output=True, text=True, timeout=120, check=True)
+        subprocess.run(cmd, capture_output=True, text=True, timeout=120, check=True, env=env)
         logger.info("Cloud Run 재시작 성공: %s (%s)", service, region)
 
         migrate_cmd = [
