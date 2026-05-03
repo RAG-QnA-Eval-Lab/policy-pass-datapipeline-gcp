@@ -12,7 +12,7 @@
       }
     ]
   },
-  "description": "RAG Youth Policy QA 파이프라인 모니터링",
+  "description": "GCE VM 시스템 모니터링 — Node Exporter + Prometheus",
   "editable": true,
   "gnetId": null,
   "graphTooltip": 1,
@@ -21,26 +21,33 @@
   "panels": [
     {
       "id": 1,
-      "title": "RAG 파이프라인 성능",
-      "description": "모델·전략별 검색/생성 레이턴시 및 토큰 사용량",
-      "type": "table",
-      "datasource": "MongoDB",
+      "title": "CPU 사용률 (%)",
+      "type": "timeseries",
+      "datasource": "Prometheus",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
       "targets": [
         {
-          "collection": "api_usage_logs",
-          "queryType": "aggregate",
-          "aggregatePipeline": "[{\"$match\": {\"status\": \"success\"}}, {\"$group\": {\"_id\": {\"model\": \"$model\", \"strategy\": \"$strategy\"}, \"avg_latency_ms\": {\"$avg\": \"$latency_ms\"}, \"avg_tokens_in\": {\"$avg\": \"$tokens_in\"}, \"avg_tokens_out\": {\"$avg\": \"$tokens_out\"}, \"total_requests\": {\"$sum\": 1}, \"total_cost_usd\": {\"$sum\": \"$cost_usd\"}}}, {\"$sort\": {\"total_requests\": -1}}]"
+          "expr": "100 - (avg by(instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+          "legendFormat": "{{instance}}"
         }
       ],
       "fieldConfig": {
         "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "lineWidth": 2,
+            "spanNulls": true
+          },
           "thresholds": {
             "mode": "absolute",
             "steps": [
               { "color": "green", "value": null },
-              { "color": "yellow", "value": 3000 },
-              { "color": "red", "value": 10000 }
+              { "color": "yellow", "value": 70 },
+              { "color": "red", "value": 90 }
             ]
           }
         }
@@ -48,61 +55,104 @@
     },
     {
       "id": 2,
-      "title": "LLM 비용 추적",
-      "description": "모델별 누적 비용 (USD)",
-      "type": "barchart",
-      "datasource": "MongoDB",
+      "title": "메모리 사용률 (%)",
+      "type": "timeseries",
+      "datasource": "Prometheus",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
       "targets": [
         {
-          "collection": "api_usage_logs",
-          "queryType": "aggregate",
-          "aggregatePipeline": "[{\"$match\": {\"cost_usd\": {\"$gt\": 0}}}, {\"$group\": {\"_id\": \"$model\", \"total_cost\": {\"$sum\": \"$cost_usd\"}, \"request_count\": {\"$sum\": 1}, \"avg_cost\": {\"$avg\": \"$cost_usd\"}}}, {\"$sort\": {\"total_cost\": -1}}]"
-        }
-      ],
-      "options": {
-        "orientation": "horizontal",
-        "showValue": "always",
-        "stacking": "none",
-        "barWidth": 0.8
-      }
-    },
-    {
-      "id": 3,
-      "title": "일별 요청 추이",
-      "description": "일별 RAG 요청 수 및 비용 추이",
-      "type": "timeseries",
-      "datasource": "MongoDB",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
-      "targets": [
-        {
-          "collection": "api_usage_logs",
-          "queryType": "aggregate",
-          "aggregatePipeline": "[{\"$group\": {\"_id\": {\"$dateToString\": {\"format\": \"%Y-%m-%d\", \"date\": \"$timestamp\"}}, \"requests\": {\"$sum\": 1}, \"total_cost\": {\"$sum\": \"$cost_usd\"}, \"avg_latency\": {\"$avg\": \"$latency_ms\"}}}, {\"$sort\": {\"_id\": 1}}]"
+          "expr": "(1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100",
+          "legendFormat": "{{instance}}"
         }
       ],
       "fieldConfig": {
         "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
           "custom": {
-            "drawStyle": "bars",
-            "fillOpacity": 60,
-            "lineWidth": 1
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "lineWidth": 2,
+            "spanNulls": true
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 70 },
+              { "color": "red", "value": 90 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "디스크 사용률 (%)",
+      "type": "gauge",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 8 },
+      "targets": [
+        {
+          "expr": "(1 - node_filesystem_avail_bytes{mountpoint=\"/\",fstype!=\"tmpfs\"} / node_filesystem_size_bytes{mountpoint=\"/\",fstype!=\"tmpfs\"}) * 100",
+          "legendFormat": "{{instance}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 70 },
+              { "color": "red", "value": 85 }
+            ]
           }
         }
       }
     },
     {
       "id": 4,
-      "title": "MongoDB 상태",
-      "description": "컬렉션별 도큐먼트 수 및 데이터 크기",
-      "type": "stat",
-      "datasource": "MongoDB",
-      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 8 },
+      "title": "네트워크 트래픽",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 8 },
       "targets": [
         {
-          "collection": "policies",
-          "queryType": "aggregate",
-          "aggregatePipeline": "[{\"$group\": {\"_id\": null, \"total_policies\": {\"$sum\": 1}}}]"
+          "expr": "rate(node_network_receive_bytes_total{device!~\"lo|veth.*\"}[5m])",
+          "legendFormat": "{{instance}} rx"
+        },
+        {
+          "expr": "rate(node_network_transmit_bytes_total{device!~\"lo|veth.*\"}[5m])",
+          "legendFormat": "{{instance}} tx"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 1,
+            "spanNulls": true
+          }
+        }
+      }
+    },
+    {
+      "id": 5,
+      "title": "VM 상태 요약",
+      "type": "stat",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 8 },
+      "targets": [
+        {
+          "expr": "up",
+          "legendFormat": "{{job}} ({{instance}})"
         }
       ],
       "options": {
@@ -115,62 +165,33 @@
       },
       "fieldConfig": {
         "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "DOWN", "color": "red" }, "1": { "text": "UP", "color": "green" } } }
+          ],
           "thresholds": {
+            "mode": "absolute",
             "steps": [
               { "color": "red", "value": null },
-              { "color": "yellow", "value": 500 },
-              { "color": "green", "value": 1000 }
+              { "color": "green", "value": 1 }
             ]
           }
         }
-      }
-    },
-    {
-      "id": 5,
-      "title": "데이터 수집 현황",
-      "description": "소스별 정책 수 및 최종 수집 일시",
-      "type": "table",
-      "datasource": "MongoDB",
-      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 8 },
-      "targets": [
-        {
-          "collection": "policies",
-          "queryType": "aggregate",
-          "aggregatePipeline": "[{\"$group\": {\"_id\": \"$source_name\", \"count\": {\"$sum\": 1}, \"last_updated\": {\"$max\": \"$updated_at\"}}}, {\"$sort\": {\"count\": -1}}]"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {},
-        "overrides": [
-          {
-            "matcher": { "id": "byName", "options": "count" },
-            "properties": [
-              { "id": "displayName", "value": "정책 수" }
-            ]
-          },
-          {
-            "matcher": { "id": "byName", "options": "_id" },
-            "properties": [
-              { "id": "displayName", "value": "데이터 소스" }
-            ]
-          }
-        ]
       }
     }
   ],
-  "refresh": "5m",
+  "refresh": "30s",
   "schemaVersion": 39,
-  "tags": ["rag", "youth-policy", "monitoring"],
+  "tags": ["rag", "node-exporter", "monitoring", "gce"],
   "templating": {
     "list": []
   },
   "time": {
-    "from": "now-7d",
+    "from": "now-1h",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "Asia/Seoul",
-  "title": "RAG Youth Policy Pipeline",
+  "title": "GCE VM Monitoring",
   "uid": "rag-youth-policy",
-  "version": 1
+  "version": 2
 }

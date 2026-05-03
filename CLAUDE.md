@@ -72,12 +72,15 @@ dags/                   # Airflow DAGs (VM #2에 배포)
 └── dag_evaluation.py       # 평가 실행 (수동 트리거)
 
 monitoring/grafana/     # Grafana 대시보드 프로비저닝
-├── dashboards/rag-pipeline.json    # 5패널: RAG 성능, LLM 비용, 일별 추이, MongoDB, 수집 현황
-└── provisioning/                   # datasources.yml (MongoDB + Cloud Monitoring), dashboards.yml
+├── dashboards/rag-pipeline.json    # 5패널: CPU, 메모리, 디스크, 네트워크, VM 상태 (Node Exporter)
+└── provisioning/                   # datasources.yml (Prometheus + Cloud Monitoring), dashboards.yml
+
+monitoring/prometheus/  # Prometheus 설정
+└── prometheus.yml      # scrape: node-mongo-vm(:9100), node-airflow-vm(10.178.0.4:9100), mongodb(:9216)
 
 scripts/
 ├── setup_uptime_check.sh   # GCP Uptime Check + 이메일 알림 설정 (gcloud CLI)
-├── setup_grafana.sh        # MongoDB VM에서 Grafana 플러그인 + 대시보드 프로비저닝
+├── setup_grafana.sh        # MongoDB VM에서 Node Exporter + Prometheus + Grafana 일체 설치
 └── ...                     # 기존 수집/평가 스크립트
 ```
 

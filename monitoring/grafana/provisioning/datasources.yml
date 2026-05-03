@@ -1,12 +1,10 @@
 apiVersion: 1
 
 datasources:
-  - name: MongoDB
-    type: grafana-mongodb-datasource
+  - name: Prometheus
+    type: prometheus
     access: proxy
-    url: mongodb://localhost:27017
-    jsonData:
-      database: rag_youth_policy
+    url: http://localhost:9090
     isDefault: true
     editable: true
 
