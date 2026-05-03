@@ -78,11 +78,11 @@ After=network.target mongod.service
 
 [Service]
 User=mongodb_exporter
-Environment="MONGODB_URI=mongodb://localhost:27017"
+Environment="MONGODB_URI=mongodb://exporter:YOUR_EXPORTER_PASSWORD@localhost:27017/admin"
 ExecStart=/usr/local/bin/mongodb_exporter \
-  --mongodb.uri=mongodb://localhost:27017 \
+  --mongodb.uri=mongodb://exporter:YOUR_EXPORTER_PASSWORD@localhost:27017/admin \
   --web.listen-address=:9216 \
-  --collect-all
+  --compatible-mode
 Restart=on-failure
 RestartSec=5
 
