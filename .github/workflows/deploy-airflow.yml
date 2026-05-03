@@ -34,4 +34,4 @@ jobs:
           gcloud compute ssh ${{ env.VM_NAME }} \
             --zone=${{ env.ZONE }} \
             --tunnel-through-iap \
-            --command="sudo git config --global --add safe.directory /opt/rag-pipeline && cd /opt/rag-pipeline && sudo git fetch origin main && sudo git reset --hard origin/main && sudo /opt/airflow/venv/bin/pip install -e '.[ingestion,indexer,ko,eval]' --quiet 2>&1 | tail -5"
+            --command="sudo git config --global --add safe.directory /opt/rag-pipeline && cd /opt/rag-pipeline && sudo git fetch origin main && sudo git reset --hard origin/main && sudo /opt/airflow/venv/bin/pip install -e '.[ingestion,indexer,ko,eval]' --quiet 2>&1 | tail -5 && sudo chown -R airflow:airflow /opt/rag-pipeline/data/"
