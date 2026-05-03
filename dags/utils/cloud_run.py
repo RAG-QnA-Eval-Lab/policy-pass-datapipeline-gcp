@@ -45,10 +45,8 @@ def restart_cloud_run_service(
         f"FORCE_RESTART={_timestamp()}",
     ]
 
-    import os
     env = os.environ.copy()
-    if not env.get("HOME", "").startswith("/home"):
-        env["HOME"] = "/root"
+    env.setdefault("CLOUDSDK_CONFIG", os.path.join(env.get("HOME", "/opt/airflow"), ".config", "gcloud"))
 
     try:
         subprocess.run(cmd, capture_output=True, text=True, timeout=120, check=True, env=env)
@@ -66,7 +64,7 @@ def restart_cloud_run_service(
             project,
             "--to-latest",
         ]
-        subprocess.run(migrate_cmd, capture_output=True, text=True, timeout=60, check=True)
+        subprocess.run(migrate_cmd, capture_output=True, text=True, timeout=60, check=True, env=env)
         logger.info("트래픽 전환 완료: %s", service)
 
         return f"restarted:{service}"
