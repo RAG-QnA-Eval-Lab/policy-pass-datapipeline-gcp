@@ -153,10 +153,10 @@ class ModelsResponse(BaseModel):
 
 class EvalSample(BaseModel):
     id: str = Field(..., min_length=1, max_length=64, pattern=r"^[a-zA-Z0-9_\-]+$")
-    question: str
-    answer: str
-    ground_truth: str
-    contexts: list[str]
+    question: str = Field(..., min_length=1, max_length=2000)
+    answer: str = Field(..., min_length=1, max_length=10000)
+    ground_truth: str = Field(..., min_length=1, max_length=10000)
+    contexts: list[str] = Field(..., min_length=1, max_length=20)
 
 
 class EvalRequest(BaseModel):

@@ -23,7 +23,7 @@ router = APIRouter(prefix="/api/v1", tags=["evaluate"], dependencies=[Depends(re
 @router.post("/evaluate", response_model=EvalResponse)
 @limiter.limit("5/minute")
 def evaluate(request: Request, body: EvalRequest) -> EvalResponse:
-    evaluator = RAGEvaluator(judge_model=body.judge_model or "vertex_ai/openai/gpt-4o-mini")
+    evaluator = RAGEvaluator(judge_model=body.judge_model or "openai/gpt-4o-mini")
 
     results: list[EvalResultItem] = []
     errors = 0

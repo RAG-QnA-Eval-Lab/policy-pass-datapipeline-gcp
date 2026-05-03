@@ -148,4 +148,5 @@ def judge_response(
         completeness=round(avg_completeness, 2),
         readability=round(avg_readability, 2),
         average=round(avg_total, 2),
+        raw_scores=tuple(all_scores),
     )

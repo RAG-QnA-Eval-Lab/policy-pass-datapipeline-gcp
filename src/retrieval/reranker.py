@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import threading
 from typing import TYPE_CHECKING, Any
 
 from src.retrieval import SearchResult
@@ -16,18 +17,20 @@ RERANKER_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 
 _reranker: Any = None
 _reranker_model_name: str | None = None
+_reranker_lock = threading.Lock()
 
 
 def load_reranker(model_name: str = RERANKER_MODEL) -> CrossEncoder:
-    """Cross-Encoder 모델 로드 (lazy singleton)."""
+    """Cross-Encoder 모델 로드 (lazy singleton, thread-safe)."""
     global _reranker, _reranker_model_name  # noqa: PLW0603
-    if _reranker is None or _reranker_model_name != model_name:
-        from sentence_transformers import CrossEncoder
+    with _reranker_lock:
+        if _reranker is None or _reranker_model_name != model_name:
+            from sentence_transformers import CrossEncoder
 
-        logger.info("Cross-Encoder 로드: %s", model_name)
-        _reranker = CrossEncoder(model_name)
-        _reranker_model_name = model_name
-    return _reranker
+            logger.info("Cross-Encoder 로드: %s", model_name)
+            _reranker = CrossEncoder(model_name)
+            _reranker_model_name = model_name
+        return _reranker
 
 
 def rerank(

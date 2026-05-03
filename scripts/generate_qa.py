@@ -15,7 +15,6 @@ import json
 import logging
 import math
 import random
-import sys
 import time
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
@@ -301,13 +300,12 @@ def generate_qa_dataset(
     system_prompt, prompt_metadata = load_qa_prompt()
     policies = load_policies(policies_path)
     if not policies:
-        logger.error("정책 데이터 없음")
-        sys.exit(1)
+        raise RuntimeError("정책 데이터 없음")
 
     qa_per_policy = 2
     selected = select_policies(policies, target_count, qa_per_policy, min_richness)
     if not selected:
-        sys.exit(1)
+        raise RuntimeError("풍부도 기준을 만족하는 정책 없음")
 
     assignments = plan_difficulty_assignments(target_count, len(selected))
 
@@ -345,8 +343,7 @@ def generate_qa_dataset(
             time.sleep(0.5)
 
     if not all_pairs:
-        logger.error("QA 쌍 생성 실패 (0건)")
-        sys.exit(1)
+        raise RuntimeError("QA 쌍 생성 실패 (0건)")
 
     output = assemble_output(all_pairs, model, prompt_metadata)
 

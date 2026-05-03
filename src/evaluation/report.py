@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import html as _html
 import json
 import logging
 from datetime import datetime, timezone
@@ -177,7 +178,7 @@ def _build_html_report(report: dict) -> str:
         judge = data.get("judge_avg", {})
         rows.append(
             "<tr>"
-            f"<td>{model}</td>"
+            f"<td>{_html.escape(model)}</td>"
             f"<td>{_fmt(ragas.get('faithfulness'))}</td>"
             f"<td>{_fmt(ragas.get('answer_relevancy'))}</td>"
             f"<td>{_fmt(ragas.get('context_precision'))}</td>"
@@ -192,8 +193,8 @@ def _build_html_report(report: dict) -> str:
             "</tr>"
         )
 
-    strategy = metadata.get("strategy", "")
-    models = ", ".join(metadata.get("models", []))
+    strategy = _html.escape(metadata.get("strategy", ""))
+    models = _html.escape(", ".join(metadata.get("models", [])))
 
     return f"""<!doctype html>
 <html lang="ko">
@@ -215,8 +216,8 @@ def _build_html_report(report: dict) -> str:
 <body>
   <h1>RAG Evaluation Report</h1>
   <div class="meta">
-    <div><strong>Run ID:</strong> <code>{report.get("run_id", "")}</code></div>
-    <div><strong>Generated At:</strong> {report.get("generated_at", "")}</div>
+    <div><strong>Run ID:</strong> <code>{_html.escape(report.get("run_id", ""))}</code></div>
+    <div><strong>Generated At:</strong> {_html.escape(report.get("generated_at", ""))}</div>
     <div><strong>Strategy:</strong> {strategy or "N/A"}</div>
     <div><strong>Models:</strong> {models or "N/A"}</div>
   </div>

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import pickle
+import json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -67,8 +67,8 @@ def index_dir(tmp_path: Path) -> Path:
     index.add(vectors)
 
     faiss.write_index(index, str(tmp_path / "faiss.index"))
-    with open(tmp_path / "metadata.pkl", "wb") as f:
-        pickle.dump(metadata, f)
+    with open(tmp_path / "metadata.json", "w", encoding="utf-8") as f:
+        json.dump(metadata, f, ensure_ascii=False)
     return tmp_path
 
 

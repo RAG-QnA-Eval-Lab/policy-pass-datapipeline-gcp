@@ -38,7 +38,7 @@ class TestEstimateCostUsd:
 class TestEnsureIndexFiles:
     def test_local_files_exist(self, tmp_path: Path) -> None:
         (tmp_path / "faiss.index").write_bytes(b"idx")
-        (tmp_path / "metadata.pkl").write_bytes(b"meta")
+        (tmp_path / "metadata.json").write_bytes(b"meta")
         from src.api.cloud_run import ensure_index_files
 
         with patch("src.api.cloud_run.settings") as mock_settings:
@@ -145,7 +145,7 @@ class TestGetIndexLastUpdated:
     def test_existing_file(self, tmp_path: Path) -> None:
         from src.api.cloud_run import get_index_last_updated
 
-        (tmp_path / "metadata.pkl").write_bytes(b"data")
+        (tmp_path / "metadata.json").write_bytes(b"data")
         result = get_index_last_updated(tmp_path)
         assert result is not None
         assert "T" in result

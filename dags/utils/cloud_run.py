@@ -4,12 +4,14 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 import subprocess
 from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 
 _DEFAULT_PROJECT = os.environ.get("GCP_PROJECT", "rag-qna-eval")
+_SERVICE_NAME_RE = re.compile(r"^[a-z][a-z0-9\-]{0,62}$")
 
 
 def restart_cloud_run_service(
@@ -24,6 +26,9 @@ def restart_cloud_run_service(
     """
     if project is None:
         project = _DEFAULT_PROJECT
+
+    if not _SERVICE_NAME_RE.match(service):
+        raise ValueError(f"Invalid Cloud Run service name: {service!r}")
 
     cmd = [
         "gcloud",

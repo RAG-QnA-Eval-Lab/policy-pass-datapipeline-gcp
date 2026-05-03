@@ -3,7 +3,7 @@
 import logging
 from enum import Enum
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
 
 from src.api.deps import get_mongo
 from src.api.schemas import PoliciesResponse, PolicyItem
@@ -51,7 +51,7 @@ def list_policies(
 
 @router.get("/policies/{policy_id}", response_model=PolicyItem)
 def get_policy(
-    policy_id: str,
+    policy_id: str = Path(..., min_length=1, max_length=128, pattern=r"^[a-zA-Z0-9_\-]+$"),
     mongo: PolicyMetadataStore = Depends(_require_mongo),
 ) -> PolicyItem:
     doc = mongo.find_by_id(policy_id)

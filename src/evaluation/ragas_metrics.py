@@ -61,9 +61,24 @@ def evaluate_ragas(
         "context_recall": ContextRecall(),
     }
 
-    scores: dict[str, float | None] = {}
-    for key, metric in metrics.items():
-        scores[key] = asyncio.run(_score_metric(metric, sample))
+    async def _run_all() -> dict[str, float | None]:
+        result: dict[str, float | None] = {}
+        for key, metric in metrics.items():
+            result[key] = await _score_metric(metric, sample)
+        return result
+
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+
+    if loop and loop.is_running():
+        import concurrent.futures
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+            scores = pool.submit(asyncio.run, _run_all()).result()
+    else:
+        scores = asyncio.run(_run_all())
 
     return RagasResult(
         faithfulness=scores["faithfulness"],

@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import json
 import logging
-import pickle
 import tempfile
 from pathlib import Path
 
@@ -66,11 +65,11 @@ def build_index_from_directory(
     index, metadata = _build_faiss_index(chunks, embeddings)
 
     index_path = output_dir / "faiss.index"
-    metadata_path = output_dir / "metadata.pkl"
+    metadata_path = output_dir / "metadata.json"
 
     faiss.write_index(index, str(index_path))
-    with open(metadata_path, "wb") as f:
-        pickle.dump(metadata, f)
+    with open(metadata_path, "w", encoding="utf-8") as f:
+        json.dump(metadata, f, ensure_ascii=False)
 
     result = {
         "documents": len(documents),
@@ -122,10 +121,10 @@ def build_index_from_policies(
     index, metadata = _build_faiss_index(chunks, embeddings)
 
     index_path = output_dir / "faiss.index"
-    metadata_path = output_dir / "metadata.pkl"
+    metadata_path = output_dir / "metadata.json"
     faiss.write_index(index, str(index_path))
-    with open(metadata_path, "wb") as f:
-        pickle.dump(metadata, f)
+    with open(metadata_path, "w", encoding="utf-8") as f:
+        json.dump(metadata, f, ensure_ascii=False)
 
     return {
         "documents": len(documents),
@@ -196,17 +195,17 @@ def build_index_from_gcs(
             return result
 
         gcs.upload_file(tmp / "faiss.index", f"{output_prefix}faiss.index")
-        gcs.upload_file(tmp / "metadata.pkl", f"{output_prefix}metadata.pkl")
+        gcs.upload_file(tmp / "metadata.json", f"{output_prefix}metadata.json")
 
         result["gcs_index_path"] = f"gs://{bucket}/{output_prefix}faiss.index"
-        result["gcs_metadata_path"] = f"gs://{bucket}/{output_prefix}metadata.pkl"
+        result["gcs_metadata_path"] = f"gs://{bucket}/{output_prefix}metadata.json"
         logger.info("GCS 인덱스 업로드 완료: %s", result["gcs_index_path"])
 
         try:
             from src.ingestion.gcs_catalog import sync_gcs_objects_to_mongo
 
             synced = sync_gcs_objects_to_mongo(
-                [f"{output_prefix}faiss.index", f"{output_prefix}metadata.pkl"],
+                [f"{output_prefix}faiss.index", f"{output_prefix}metadata.json"],
                 bucket=bucket,
                 metadata_overrides={
                     f"{output_prefix}faiss.index": {
@@ -214,7 +213,7 @@ def build_index_from_gcs(
                         "record_count": result["chunks"],
                         "extra": {"documents": result["documents"], "chunks": result["chunks"]},
                     },
-                    f"{output_prefix}metadata.pkl": {
+                    f"{output_prefix}metadata.json": {
                         "asset_type": "index_artifact",
                         "record_count": result["chunks"],
                         "extra": {"documents": result["documents"], "chunks": result["chunks"]},

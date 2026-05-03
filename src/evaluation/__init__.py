@@ -23,6 +23,7 @@ class JudgeResult:
     completeness: float = 0.0
     readability: float = 0.0
     average: float = 0.0
+    raw_scores: tuple[dict[str, int], ...] = ()
 
 
 @dataclass(frozen=True)

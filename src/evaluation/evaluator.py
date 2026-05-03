@@ -11,7 +11,7 @@ from src.evaluation import EvalResult, JudgeResult, RagasResult, SafetyResult
 
 logger = logging.getLogger(__name__)
 
-_DEFAULT_JUDGE_MODEL = "vertex_ai/openai/gpt-4o-mini"
+_DEFAULT_JUDGE_MODEL = "openai/gpt-4o-mini"
 _CHECKPOINT_INTERVAL = 10
 
 
@@ -164,6 +164,7 @@ def _judge_to_dict(result: JudgeResult | None) -> dict | None:
         "completeness": result.completeness,
         "readability": result.readability,
         "average": result.average,
+        "raw_scores": list(result.raw_scores),
     }
 
 

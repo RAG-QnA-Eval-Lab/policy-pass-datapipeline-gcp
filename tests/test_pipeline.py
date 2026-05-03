@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import pickle
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -61,7 +60,7 @@ class TestBuildIndexFromDirectory:
         assert result["documents"] == 1
         assert result["chunks"] >= 1
         assert (output_dir / "faiss.index").exists()
-        assert (output_dir / "metadata.pkl").exists()
+        assert (output_dir / "metadata.json").exists()
 
     def test_empty_directory(self, tmp_path: Path) -> None:
         (tmp_path / "input").mkdir()
@@ -92,7 +91,7 @@ class TestBuildIndexFromPolicies:
         assert result["documents"] == 2
 
     @patch("src.ingestion.pipeline.embed_texts")
-    def test_metadata_in_pickle(self, mock_embed: MagicMock, tmp_path: Path) -> None:
+    def test_metadata_in_json(self, mock_embed: MagicMock, tmp_path: Path) -> None:
         policies = [
             {"policy_id": "P1", "title": "정책1", "raw_content": "내용1", "source_name": "test", "category": "housing"},
         ]
@@ -100,8 +99,8 @@ class TestBuildIndexFromPolicies:
 
         build_index_from_policies(policies, tmp_path / "index")
 
-        with open(tmp_path / "index" / "metadata.pkl", "rb") as f:
-            metadata = pickle.load(f)
+        with open(tmp_path / "index" / "metadata.json", encoding="utf-8") as f:
+            metadata = json.load(f)
 
         assert len(metadata) == 1
         assert metadata[0]["policy_id"] == "P1"

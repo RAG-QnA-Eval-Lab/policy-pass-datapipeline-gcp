@@ -172,7 +172,7 @@ def health() -> JSONResponse:
                             sources={k: SourceStatus(**v) for k, v in raw.get("sources", {}).items()},
                         )
                         _pipeline_status_ts = now
-                data_pipeline = _pipeline_status_cache
+                    data_pipeline = _pipeline_status_cache
             except Exception as exc:
                 logger.debug("Data pipeline status lookup failed: %s", exc)
         except Exception as exc:

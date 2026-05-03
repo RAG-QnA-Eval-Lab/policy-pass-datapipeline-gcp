@@ -6,8 +6,8 @@
 
 from __future__ import annotations
 
+import json
 import logging
-import pickle
 from enum import Enum
 from pathlib import Path
 
@@ -45,7 +45,7 @@ class RetrievalPipeline:
         self.rerank_top_k = rerank_top_k if rerank_top_k is not None else settings.rerank_top_k
 
         index_path = index_dir / "faiss.index"
-        metadata_path = index_dir / "metadata.pkl"
+        metadata_path = index_dir / "metadata.json"
 
         if not index_path.exists():
             raise FileNotFoundError(f"FAISS 인덱스 없음: {index_path}")
@@ -53,8 +53,8 @@ class RetrievalPipeline:
             raise FileNotFoundError(f"메타데이터 없음: {metadata_path}")
 
         self.index = faiss.read_index(str(index_path))
-        with open(metadata_path, "rb") as f:
-            self.metadata: list[dict] = pickle.load(f)  # noqa: S301
+        with open(metadata_path, encoding="utf-8") as f:
+            self.metadata: list[dict] = json.load(f)
 
         self.bm25, self._bm25_docs = build_bm25_index(self.metadata)
 

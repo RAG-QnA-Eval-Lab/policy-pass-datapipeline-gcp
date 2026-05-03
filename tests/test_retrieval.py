@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import pickle
+import json
 import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -51,8 +51,8 @@ def index_dir(faiss_index_and_metadata: tuple[faiss.IndexFlatL2, list[dict]]) ->
     with tempfile.TemporaryDirectory() as tmpdir:
         tmppath = Path(tmpdir)
         faiss.write_index(index, str(tmppath / "faiss.index"))
-        with open(tmppath / "metadata.pkl", "wb") as f:
-            pickle.dump(metadata, f)
+        with open(tmppath / "metadata.json", "w", encoding="utf-8") as f:
+            json.dump(metadata, f, ensure_ascii=False)
         yield tmppath
 
 
@@ -63,7 +63,7 @@ def index_dir(faiss_index_and_metadata: tuple[faiss.IndexFlatL2, list[dict]]) ->
 
 class TestVectorStore:
     def test_load_index(self, index_dir: Path) -> None:
-        index, metadata = load_index(index_dir / "faiss.index", index_dir / "metadata.pkl")
+        index, metadata = load_index(index_dir / "faiss.index", index_dir / "metadata.json")
         assert index.ntotal == 5
         assert len(metadata) == 5
 

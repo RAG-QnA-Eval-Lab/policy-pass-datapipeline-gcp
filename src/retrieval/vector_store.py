@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+import json
 import logging
-import pickle
 from pathlib import Path
 
 import faiss
@@ -28,8 +28,8 @@ def load_index(
         raise FileNotFoundError(f"메타데이터 없음: {metadata_path}")
 
     index = faiss.read_index(str(index_path))
-    with open(metadata_path, "rb") as f:
-        metadata = pickle.load(f)  # noqa: S301
+    with open(metadata_path, encoding="utf-8") as f:
+        metadata = json.load(f)
 
     logger.info("인덱스 로드: %d vectors, dim=%d", index.ntotal, index.d)
     return index, metadata

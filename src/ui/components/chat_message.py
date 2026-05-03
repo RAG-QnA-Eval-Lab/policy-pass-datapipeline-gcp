@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import html as _html
 from typing import Any
 
 import streamlit as st
@@ -15,11 +16,11 @@ def render_answer(response: dict[str, Any]) -> None:
     if sources:
         with st.expander(f"참고 출처 ({len(sources)}건)", expanded=False):
             for i, src in enumerate(sources, 1):
-                title = src.get("title", "제목 없음")
-                source_name = src.get("source_name", "")
+                title = _html.escape(src.get("title", "제목 없음"))
+                source_name = _html.escape(src.get("source_name", ""))
                 score = src.get("score", 0.0)
                 content = src.get("content", "")
-                preview = content[:150] + "..." if len(content) > 150 else content
+                preview = _html.escape(content[:150] + "..." if len(content) > 150 else content)
                 header = f"{title}"
                 if source_name:
                     header += f" &middot; {source_name}"
@@ -46,9 +47,9 @@ def _render_response_meta(response: dict[str, Any]) -> None:
     chips: list[str] = []
     if model:
         short_model = model.split("/")[-1] if "/" in model else model
-        chips.append(f'<span class="meta-chip">{short_model}</span>')
+        chips.append(f'<span class="meta-chip">{_html.escape(short_model)}</span>')
     if strategy:
-        chips.append(f'<span class="meta-chip">{strategy}</span>')
+        chips.append(f'<span class="meta-chip">{_html.escape(strategy)}</span>')
     if total_tokens:
         chips.append(f'<span class="meta-chip">{total_tokens:,} tokens</span>')
     if total_ms:
