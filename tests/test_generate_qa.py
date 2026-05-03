@@ -14,11 +14,15 @@ sys.path.insert(0, str(sys_path_fix))
 
 from scripts.generate_qa import (  # noqa: E402
     assemble_output,
+    build_comparison_prompt,
     build_qa_prompt,
+    find_comparison_groups,
+    generate_comparison_qa,
     generate_qa_for_policy,
     load_qa_prompt,
     parse_qa_response,
     plan_difficulty_assignments,
+    qa_count_for_policy,
     score_policy_richness,
     select_policies,
 )
@@ -77,6 +81,20 @@ class TestScorePolicyRichness:
         assert 3 <= score <= 5
 
 
+class TestQaCountForPolicy:
+    def test_rich_policy_gets_3(self) -> None:
+        p = _make_policy()
+        assert qa_count_for_policy(p) == 3
+
+    def test_sparse_policy_gets_2(self) -> None:
+        p = _make_policy(
+            summary="요약", description="", eligibility="",
+            benefits="", how_to_apply="", application_period="",
+            managing_department="", raw_content="x" * 300,
+        )
+        assert qa_count_for_policy(p) == 2
+
+
 class TestSelectPolicies:
     def _policies_pool(self) -> list[dict]:
         policies = []
@@ -91,19 +109,29 @@ class TestSelectPolicies:
             ))
         return policies
 
-    def test_excludes_participation(self) -> None:
-        selected = select_policies(self._policies_pool(), target_count=40, qa_per_policy=2)
-        cats = {p["category"] for p in selected}
-        assert "participation" not in cats
+    def test_includes_participation(self) -> None:
+        selected = select_policies(self._policies_pool(), target_count=40)
+        cats = {p["category"] for p, _ in selected}
+        assert "participation" in cats
 
     def test_category_balance(self) -> None:
-        selected = select_policies(self._policies_pool(), target_count=40, qa_per_policy=2)
-        cats = {p["category"] for p in selected}
-        assert cats == {"housing", "employment", "education", "welfare"}
+        selected = select_policies(self._policies_pool(), target_count=50)
+        cats = {p["category"] for p, _ in selected}
+        assert cats == {"housing", "employment", "education", "welfare", "participation"}
+
+    def test_returns_tuples_with_qa_count(self) -> None:
+        selected = select_policies(self._policies_pool(), target_count=20)
+        assert len(selected) > 0
+        for item in selected:
+            assert isinstance(item, tuple)
+            assert len(item) == 2
+            policy, qa_n = item
+            assert isinstance(policy, dict)
+            assert qa_n in (2, 3)
 
     def test_respects_target(self) -> None:
-        selected = select_policies(self._policies_pool(), target_count=20, qa_per_policy=2)
-        assert 8 <= len(selected) <= 12
+        selected = select_policies(self._policies_pool(), target_count=20)
+        assert 6 <= len(selected) <= 12
 
     def test_empty_on_no_rich_policies(self) -> None:
         sparse = [
@@ -113,8 +141,60 @@ class TestSelectPolicies:
                 managing_department="", raw_content="짧",
             )
         ]
-        selected = select_policies(sparse, target_count=10, qa_per_policy=2, min_richness=4)
+        selected = select_policies(sparse, target_count=10, min_richness=4)
         assert selected == []
+
+
+class TestFindComparisonGroups:
+    def _policies_with_themes(self) -> list[dict]:
+        policies = []
+        for i in range(5):
+            policies.append(_make_policy(
+                category="housing", policy_id=f"h_rent_{i}",
+                title=f"청년 월세 지원 사업 {i}",
+            ))
+        for i in range(3):
+            policies.append(_make_policy(
+                category="employment", policy_id=f"e_job_{i}",
+                title=f"청년 취업 지원 프로그램 {i}",
+            ))
+        for i in range(3):
+            policies.append(_make_policy(
+                category="employment", policy_id=f"e_biz_{i}",
+                title=f"청년 창업 지원 사업 {i}",
+            ))
+        policies.append(_make_policy(
+            category="welfare", policy_id="w_lone",
+            title="고독한 복지 정책",
+        ))
+        return policies
+
+    def test_finds_groups(self) -> None:
+        groups = find_comparison_groups(self._policies_with_themes())
+        assert len(groups) >= 2
+
+    def test_group_size(self) -> None:
+        groups = find_comparison_groups(self._policies_with_themes())
+        for group in groups:
+            assert 2 <= len(group) <= 3
+
+    def test_same_category_within_group(self) -> None:
+        groups = find_comparison_groups(self._policies_with_themes())
+        for group in groups:
+            cats = {p["category"] for p in group}
+            assert len(cats) == 1
+
+    def test_max_groups_limit(self) -> None:
+        groups = find_comparison_groups(self._policies_with_themes(), max_groups=2)
+        assert len(groups) <= 2
+
+    def test_empty_when_no_themes_match(self) -> None:
+        policies = [
+            _make_policy(category="housing", policy_id=f"h_{i}", title=f"기타 정책 {i}")
+            for i in range(5)
+        ]
+        groups = find_comparison_groups(policies)
+        assert groups == []
 
 
 class TestParseQaResponse:
@@ -162,21 +242,34 @@ class TestParseQaResponse:
     def test_not_array(self) -> None:
         assert parse_qa_response('{"question": "Q"}') is None
 
+    def test_comparison_type_accepted(self) -> None:
+        data = [{"question": "Q", "ground_truth": "A", "difficulty": "hard", "qa_type": "comparison"}]
+        result = parse_qa_response(json.dumps(data))
+        assert result is not None
+        assert result[0]["qa_type"] == "comparison"
+
 
 class TestPlanDifficultyAssignments:
     def test_distribution(self) -> None:
-        assignments = plan_difficulty_assignments(100, 40)
+        assignments = plan_difficulty_assignments([2] * 40)
         flat = [d for group in assignments for d in group]
         from collections import Counter
         counts = Counter(flat)
-        assert counts["easy"] == 40
-        assert counts["medium"] == 40
-        assert counts["hard"] == 20
+        assert counts["easy"] == 32
+        assert counts["medium"] == 32
+        assert counts["hard"] == 16
 
-    def test_chunk_sizes(self) -> None:
-        assignments = plan_difficulty_assignments(50, 20)
+    def test_variable_chunk_sizes(self) -> None:
+        assignments = plan_difficulty_assignments([2, 3, 2, 3, 2])
+        assert len(assignments) == 5
+        for assignment, expected_len in zip(assignments, [2, 3, 2, 3, 2]):
+            assert len(assignment) == expected_len
+
+    def test_all_valid_difficulties(self) -> None:
+        assignments = plan_difficulty_assignments([3] * 10)
         for group in assignments:
-            assert 2 <= len(group) <= 3
+            for d in group:
+                assert d in {"easy", "medium", "hard"}
 
 
 class TestBuildQaPrompt:
@@ -193,6 +286,31 @@ class TestBuildQaPrompt:
         p = _make_policy(raw_content="가" * 5000)
         msgs = build_qa_prompt(p, 2, ["easy", "medium"], "system prompt")
         assert len(msgs[1]["content"]) < 5000
+
+
+class TestBuildComparisonPrompt:
+    def test_includes_multiple_policies(self) -> None:
+        group = [
+            _make_policy(title="정책 A", policy_id="A"),
+            _make_policy(title="정책 B", policy_id="B"),
+        ]
+        msgs = build_comparison_prompt(group, 2, ["medium", "hard"], "system prompt")
+        assert len(msgs) == 2
+        assert "정책 A" in msgs[1]["content"]
+        assert "정책 B" in msgs[1]["content"]
+        assert "비교" in msgs[1]["content"]
+        assert "comparison" in msgs[1]["content"]
+
+    def test_three_policies(self) -> None:
+        group = [
+            _make_policy(title=f"정책 {c}", policy_id=c)
+            for c in ["X", "Y", "Z"]
+        ]
+        msgs = build_comparison_prompt(group, 2, ["easy", "medium"], "sys")
+        content = msgs[1]["content"]
+        assert "3개 정책" in content
+        assert "정책 X" in content
+        assert "정책 Z" in content
 
 
 class TestLoadQaPrompt:
@@ -220,7 +338,7 @@ class TestAssembleOutput:
             },
             {
                 "question": "Q2", "ground_truth": "A2",
-                "difficulty": "medium", "qa_type": "reasoning",
+                "difficulty": "medium", "qa_type": "comparison",
                 "category": "employment", "policy_title": "T2",
                 "policy_id": "P2", "reference_doc": "d.json",
                 "reference_source": "data_portal",
@@ -232,6 +350,7 @@ class TestAssembleOutput:
         assert result["domain"] == "youth_policy"
         assert result["prompt"]["gcs_uri"] == "gs://bucket/prompts/x.txt"
         assert set(result["categories"]) == {"housing", "employment"}
+        assert result["qa_type_distribution"]["comparison"] == 1
 
     def test_sequential_ids(self) -> None:
         pairs = [
@@ -269,5 +388,41 @@ class TestGenerateQaForPolicy:
         with patch("scripts.generate_qa.generate", side_effect=RuntimeError("API error")):
             result = generate_qa_for_policy(
                 _make_policy(), qa_count=1, difficulties=["easy"], system_prompt="prompt",
+            )
+        assert result is None
+
+
+class TestGenerateComparisonQa:
+    def test_success(self) -> None:
+        mock_content = json.dumps([
+            {"question": "A vs B?", "ground_truth": "차이점은...", "difficulty": "hard", "qa_type": "comparison"},
+        ], ensure_ascii=False)
+        mock_resp = LLMResponse(
+            content=mock_content, model="vertex_ai/gemini-2.5-flash",
+            prompt_tokens=200, completion_tokens=80, total_tokens=280, latency=1.0,
+        )
+        group = [
+            _make_policy(title="정책 A", policy_id="A"),
+            _make_policy(title="정책 B", policy_id="B"),
+        ]
+        with patch("scripts.generate_qa.generate", return_value=mock_resp):
+            result = generate_comparison_qa(
+                group, qa_count=1, difficulties=["hard"], system_prompt="prompt",
+            )
+        assert result is not None
+        assert len(result) == 1
+        assert result[0]["qa_type"] == "comparison"
+        assert "정책 A" in result[0]["policy_title"]
+        assert "정책 B" in result[0]["policy_title"]
+        assert result[0]["policy_id"] == "A,B"
+
+    def test_failure(self) -> None:
+        group = [
+            _make_policy(title="정책 A", policy_id="A"),
+            _make_policy(title="정책 B", policy_id="B"),
+        ]
+        with patch("scripts.generate_qa.generate", side_effect=RuntimeError("API error")):
+            result = generate_comparison_qa(
+                group, qa_count=1, difficulties=["hard"], system_prompt="prompt",
             )
         assert result is None
