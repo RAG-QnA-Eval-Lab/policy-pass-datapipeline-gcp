@@ -146,11 +146,12 @@ def qa_generation():
                 "qa_type_distribution": data.get("qa_type_distribution"),
                 "prompt": data.get("prompt"),
             })
+            qa_count = store.sync_qa_pairs(data.get("samples", []), dataset_id)
         finally:
             store.close()
 
-        logger.info("QA MongoDB 메타데이터 동기화 완료: %s", gcs_uri)
-        return {"gcs_assets_synced": synced_assets, "dataset_id": dataset_id}
+        logger.info("QA MongoDB 동기화 완료: 메타데이터 + %d건 QA 쌍 → %s", qa_count, gcs_uri)
+        return {"gcs_assets_synced": synced_assets, "dataset_id": dataset_id, "qa_pairs_synced": qa_count}
 
     result = generate_qa()
     uploaded = upload_to_gcs(result)

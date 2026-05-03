@@ -49,6 +49,10 @@ class PolicyMetadataStore:
         return self.db["qa_datasets"]
 
     @property
+    def qa_pairs(self) -> Collection:
+        return self.db["qa_pairs"]
+
+    @property
     def api_usage_logs(self) -> Collection:
         return self.db["api_usage_logs"]
 
@@ -66,6 +70,10 @@ class PolicyMetadataStore:
         self.qa_datasets.create_index("dataset_id", unique=True)
         self.qa_datasets.create_index("generated_at")
         self.qa_datasets.create_index("gcs_uri")
+        self.qa_pairs.create_index("id", unique=True)
+        self.qa_pairs.create_index("dataset_id")
+        self.qa_pairs.create_index("category")
+        self.qa_pairs.create_index("difficulty")
         self.api_usage_logs.create_index("timestamp")
         self.api_usage_logs.create_index("request_id")
         self.api_usage_logs.create_index("model")
@@ -162,6 +170,18 @@ class PolicyMetadataStore:
             {"$set": {**metadata, "dataset_id": dataset_id, "updated_at": now}},
             upsert=True,
         )
+
+    def sync_qa_pairs(self, samples: list[dict], dataset_id: str) -> int:
+        """QA 쌍을 qa_pairs 컬렉션에 동기화. 기존 동일 dataset_id 데이터는 교체."""
+        self.qa_pairs.delete_many({"dataset_id": dataset_id})
+        if not samples:
+            return 0
+        now = datetime.now(timezone.utc).isoformat()
+        docs = [{**s, "dataset_id": dataset_id, "synced_at": now} for s in samples]
+        result = self.qa_pairs.insert_many(docs)
+        count = len(result.inserted_ids)
+        logger.info("qa_pairs %d건 동기화 (dataset_id=%s)", count, dataset_id)
+        return count
 
     def log_ingestion(
         self,
