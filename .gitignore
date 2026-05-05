@@ -11,6 +11,9 @@ build/
 sa-key*.json
 *-credentials.json
 
+*.gstmp
+.deepeval/
+
 *.index
 *.pkl
 data/index/
@@ -18,6 +21,7 @@ data/documents/
 data/policies/raw/
 data/policies/processed/
 data/results/
+data/experiments/
 
 .venv/
 venv/
