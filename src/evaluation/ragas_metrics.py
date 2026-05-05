@@ -1,25 +1,50 @@
-"""Stage 1 — RAGAS v0.4 정량 평가."""
+"""Stage 1 — RAGAS v0.4.3 정량 평가."""
 
 from __future__ import annotations
 
 import asyncio
 import logging
+import os
 
 from src.evaluation import RagasResult
 
 logger = logging.getLogger(__name__)
 
+_ragas_llm = None
+_ragas_embeddings = None
 
-async def _score_metric(metric: object, sample: object) -> float | None:
-    """단일 메트릭 비동기 평가 — 실패 시 None 반환."""
-    name = type(metric).__name__
+def _make_llm():
+    global _ragas_llm  # noqa: PLW0603
+    if _ragas_llm is not None:
+        return _ragas_llm
+
+    from openai import AsyncOpenAI
+
     try:
-        score = await metric.single_turn_ascore(sample)  # type: ignore[attr-defined]
-        logger.debug("메트릭 %s: %.4f", name, score)
-        return float(score)
-    except Exception:
-        logger.exception("메트릭 %s 평가 실패", name)
-        return None
+        from ragas.llms import llm_factory
+    except Exception as e:  # pragma: no cover
+        raise RuntimeError("RAGAS LLM factory import failed") from e
+
+    client = AsyncOpenAI(api_key=os.environ["OPENAI_API_KEY"], timeout=60.0)
+    _ragas_llm = llm_factory("gpt-4o-mini", client=client)
+    return _ragas_llm
+
+
+def _make_embeddings():
+    global _ragas_embeddings  # noqa: PLW0603
+    if _ragas_embeddings is not None:
+        return _ragas_embeddings
+
+    from openai import AsyncOpenAI
+
+    try:
+        from ragas.embeddings import OpenAIEmbeddings
+    except Exception as e:  # pragma: no cover
+        raise RuntimeError("RAGAS embeddings import failed") from e
+
+    client = AsyncOpenAI(api_key=os.environ["OPENAI_API_KEY"], timeout=60.0)
+    _ragas_embeddings = OpenAIEmbeddings(client=client)
+    return _ragas_embeddings
 
 
 def evaluate_ragas(
@@ -28,44 +53,57 @@ def evaluate_ragas(
     answer: str,
     ground_truth: str,
 ) -> RagasResult:
-    """RAGAS v0.4 정량 평가 수행.
-
-    Args:
-        question: 사용자 질문.
-        contexts: 검색된 컨텍스트 목록.
-        answer: LLM이 생성한 답변.
-        ground_truth: 정답 레퍼런스.
-
-    Returns:
-        RagasResult with metric scores (None if metric failed).
-    """
-    from ragas.dataset_schema import SingleTurnSample
     from ragas.metrics.collections import (
+        AnswerRelevancy,
         ContextPrecision,
         ContextRecall,
         Faithfulness,
-        ResponseRelevancy,
     )
-
-    sample = SingleTurnSample(
-        user_input=question,
-        response=answer,
-        retrieved_contexts=contexts,
-        reference=ground_truth,
-    )
-
-    metrics = {
-        "faithfulness": Faithfulness(),
-        "answer_relevancy": ResponseRelevancy(),
-        "context_precision": ContextPrecision(),
-        "context_recall": ContextRecall(),
-    }
 
     async def _run_all() -> dict[str, float | None]:
-        result: dict[str, float | None] = {}
-        for key, metric in metrics.items():
-            result[key] = await _score_metric(metric, sample)
-        return result
+        llm = _make_llm()
+        embeddings = _make_embeddings()
+        scores: dict[str, float | None] = {}
+
+        faithfulness = Faithfulness(llm=llm)
+        try:
+            r = await faithfulness.ascore(
+                user_input=question, response=answer, retrieved_contexts=contexts
+            )
+            scores["faithfulness"] = float(r.value)
+        except Exception:
+            logger.exception("Faithfulness 평가 실패")
+            scores["faithfulness"] = None
+
+        relevancy = AnswerRelevancy(llm=llm, embeddings=embeddings)
+        try:
+            r = await relevancy.ascore(user_input=question, response=answer)
+            scores["answer_relevancy"] = float(r.value)
+        except Exception:
+            logger.exception("AnswerRelevancy 평가 실패")
+            scores["answer_relevancy"] = None
+
+        precision = ContextPrecision(llm=llm)
+        try:
+            r = await precision.ascore(
+                user_input=question, reference=ground_truth, retrieved_contexts=contexts
+            )
+            scores["context_precision"] = float(r.value)
+        except Exception:
+            logger.exception("ContextPrecision 평가 실패")
+            scores["context_precision"] = None
+
+        recall = ContextRecall(llm=llm)
+        try:
+            r = await recall.ascore(
+                user_input=question, retrieved_contexts=contexts, reference=ground_truth
+            )
+            scores["context_recall"] = float(r.value)
+        except Exception:
+            logger.exception("ContextRecall 평가 실패")
+            scores["context_recall"] = None
+
+        return scores
 
     try:
         loop = asyncio.get_running_loop()

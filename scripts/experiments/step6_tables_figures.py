@@ -109,9 +109,9 @@ def _build_tables7_8_9_generation() -> tuple[list[dict], list[dict], list[dict]]
     safety_rows = []
 
     for cond, samples in sorted(by_condition.items()):
-        valid_ragas = [s for s in samples if s.get("eval", {}).get("ragas")]
-        valid_judge = [s for s in samples if s.get("eval", {}).get("judge")]
-        valid_safety = [s for s in samples if s.get("eval", {}).get("safety")]
+        valid_ragas = [s for s in samples if (s.get("eval") or {}).get("ragas")]
+        valid_judge = [s for s in samples if (s.get("eval") or {}).get("judge")]
+        valid_safety = [s for s in samples if (s.get("eval") or {}).get("safety")]
 
         if valid_ragas:
             ragas_metrics = {}
@@ -167,7 +167,7 @@ def _build_table10_judge_cost() -> dict:
         "perfect_agreement_rate": avg_metrics.get("perfect_agreement_rate"),
         "class_agreement_rate": avg_metrics.get("class_agreement_rate"),
         "cost_gpt4o_mini_usd": cost.get("gpt-4o-mini", {}).get("estimated_usd"),
-        "cost_gpt4o_usd": cost.get("gpt-4o", {}).get("estimated_usd"),
+        "cost_gemini_pro_usd": cost.get("gemini-3.1-pro", {}).get("estimated_usd"),
         "cost_ratio": cost.get("cost_ratio"),
         "per_metric": {
             metric: {
@@ -427,7 +427,7 @@ def _fig_cost_scatter(cost_table: dict, figures_dir: Path, go: object, make_subp
             ))
 
     fig.update_layout(
-        title="GPT-4o-mini vs GPT-4o: 메트릭별 일치도",
+        title="GPT-4o-mini vs Gemini 3.1 Pro: 메트릭별 일치도",
         xaxis_title="MAE (낮을수록 좋음)",
         yaxis_title="Kendall τ (높을수록 좋음)",
         yaxis_range=[0, 1],

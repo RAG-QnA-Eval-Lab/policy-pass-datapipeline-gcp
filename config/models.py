@@ -22,8 +22,8 @@ MODELS: dict[str, ModelConfig] = {
         "max_tokens": 2048,
     },
     "claude-sonnet": {
-        "id": "vertex_ai/claude-sonnet-4-5",
-        "description": "Claude Sonnet 4.5 (Vertex AI)",
+        "id": "anthropic/claude-sonnet-4-5",
+        "description": "Claude Sonnet 4.5 (Anthropic)",
         "temperature": 0.0,
         "max_tokens": 2048,
     },

@@ -93,26 +93,28 @@ class TestDataclasses:
 
 class TestRagasMetrics:
     def test_evaluate_ragas_success(self, sample_question, sample_contexts, sample_answer, sample_ground_truth):
-        mock_metric = MagicMock()
-        mock_metric.single_turn_ascore = AsyncMock(return_value=0.9)
+        mock_result = MagicMock()
+        mock_result.value = 0.9
 
-        mock_sample_cls = MagicMock()
+        mock_metric = MagicMock()
+        mock_metric.ascore = AsyncMock(return_value=mock_result)
 
         with patch.dict("sys.modules", {
             "ragas": MagicMock(),
-            "ragas.dataset_schema": MagicMock(SingleTurnSample=mock_sample_cls),
             "ragas.metrics": MagicMock(),
             "ragas.metrics.collections": MagicMock(
-                Faithfulness=lambda: mock_metric,
-                ResponseRelevancy=lambda: mock_metric,
-                ContextPrecision=lambda: mock_metric,
-                ContextRecall=lambda: mock_metric,
+                Faithfulness=lambda **kw: mock_metric,
+                AnswerRelevancy=lambda **kw: mock_metric,
+                ContextPrecision=lambda **kw: mock_metric,
+                ContextRecall=lambda **kw: mock_metric,
             ),
         }):
             import importlib
 
             import src.evaluation.ragas_metrics as rm
             importlib.reload(rm)
+            rm._ragas_llm = MagicMock()
+            rm._ragas_embeddings = MagicMock()
 
             result = rm.evaluate_ragas(sample_question, sample_contexts, sample_answer, sample_ground_truth)
 
@@ -124,29 +126,31 @@ class TestRagasMetrics:
 
     def test_evaluate_ragas_partial_failure(self, sample_question, sample_contexts, sample_answer, sample_ground_truth):
         """일부 메트릭 실패 시 None으로 반환."""
+        mock_result_ok = MagicMock()
+        mock_result_ok.value = 0.9
+
         mock_metric_ok = MagicMock()
-        mock_metric_ok.single_turn_ascore = AsyncMock(return_value=0.9)
+        mock_metric_ok.ascore = AsyncMock(return_value=mock_result_ok)
 
         mock_metric_fail = MagicMock()
-        mock_metric_fail.single_turn_ascore = AsyncMock(side_effect=Exception("metric error"))
-
-        mock_sample_cls = MagicMock()
+        mock_metric_fail.ascore = AsyncMock(side_effect=Exception("metric error"))
 
         with patch.dict("sys.modules", {
             "ragas": MagicMock(),
-            "ragas.dataset_schema": MagicMock(SingleTurnSample=mock_sample_cls),
             "ragas.metrics": MagicMock(),
             "ragas.metrics.collections": MagicMock(
-                Faithfulness=lambda: mock_metric_ok,
-                ResponseRelevancy=lambda: mock_metric_fail,
-                ContextPrecision=lambda: mock_metric_ok,
-                ContextRecall=lambda: mock_metric_fail,
+                Faithfulness=lambda **kw: mock_metric_ok,
+                AnswerRelevancy=lambda **kw: mock_metric_fail,
+                ContextPrecision=lambda **kw: mock_metric_ok,
+                ContextRecall=lambda **kw: mock_metric_fail,
             ),
         }):
             import importlib
 
             import src.evaluation.ragas_metrics as rm
             importlib.reload(rm)
+            rm._ragas_llm = MagicMock()
+            rm._ragas_embeddings = MagicMock()
 
             result = rm.evaluate_ragas(sample_question, sample_contexts, sample_answer, sample_ground_truth)
 

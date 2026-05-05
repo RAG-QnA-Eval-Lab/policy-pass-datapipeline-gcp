@@ -16,8 +16,9 @@ MODEL_PRICING: dict[str, tuple[float, float]] = {
     "openai/gpt-4o-mini": (0.15, 0.60),
     "vertex_ai/gemini-2.5-flash": (0.15, 0.60),
     "vertex_ai/gemini-2.5-pro": (1.25, 5.00),
-    "vertex_ai/claude-sonnet-4-5": (3.00, 15.00),
+    "claude-sonnet-4-5": (3.00, 15.00),
     "huggingface/meta-llama/Llama-3.3-70B-Instruct": (0.0, 0.0),
+    "vertex_ai/gemini-3.1-pro-preview": (2.00, 12.00),
 }
 
 EXPERIMENT_MODELS = ["gpt-4o-mini", "gpt-4o", "claude-sonnet", "gemini-flash", "llama3"]
@@ -118,11 +119,11 @@ def load_latest_checkpoint(checkpoint_dir: Path, step_name: str) -> tuple[dict |
     if not checkpoint_dir.exists():
         return None, 0
 
-    ckpts = sorted(checkpoint_dir.glob(f"{step_name}_ckpt_*.json"))
+    ckpts = list(checkpoint_dir.glob(f"{step_name}_ckpt_*.json"))
     if not ckpts:
         return None, 0
 
-    latest = ckpts[-1]
+    latest = max(ckpts, key=lambda p: int(p.stem.split("_")[-1]))
     idx = int(latest.stem.split("_")[-1])
     data = load_json(latest)
     return data, idx

@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 import random
+import re
 
 from src.evaluation import JudgeResult
 
@@ -66,12 +67,21 @@ def _build_context_block(contexts: list[str], shuffle: bool = False) -> str:
 
 
 def _parse_scores(raw: str) -> dict[str, int] | None:
-    """JSON 블록에서 점수 파싱 — ```json ... ``` 래핑도 처리."""
+    """JSON 블록에서 점수 파싱 — ```json 래핑, 전후 텍스트 모두 처리."""
     text = raw.strip()
-    if text.startswith("```"):
+
+    fenced = re.search(r"```(?:json)?\s*\n?(.*?)```", text, re.DOTALL)
+    if fenced:
+        text = fenced.group(1).strip()
+    elif text.startswith("```"):
         lines = text.split("\n")
         lines = [line for line in lines if not line.strip().startswith("```")]
         text = "\n".join(lines).strip()
+
+    brace = re.search(r"\{[^{}]*\}", text, re.DOTALL)
+    if brace:
+        text = brace.group(0)
+
     try:
         data = json.loads(text)
         required = {"citation_accuracy", "completeness", "readability"}
@@ -117,14 +127,15 @@ def judge_response(
         )
 
         try:
+            temp = 1.0 if "gemini-3" in judge_model else 0.0
             resp = generate(
                 messages=[
                     {"role": "system", "content": _JUDGE_SYSTEM_PROMPT},
                     {"role": "user", "content": user_msg},
                 ],
                 model=judge_model,
-                temperature=0.0,
-                max_tokens=256,
+                temperature=temp,
+                max_tokens=512,
             )
             scores = _parse_scores(resp.content)
             if scores is not None:

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import signal
 from pathlib import Path
 
 from scripts.experiments._common import (
@@ -31,7 +32,17 @@ OUTPUT_DIR = BASE_OUTPUT_DIR / "step3_evaluation"
 GENERATION_RESULTS_PATH = BASE_OUTPUT_DIR / "step2_generation" / "generation_results.json"
 
 JUDGE_PRIMARY = "openai/gpt-4o-mini"
-JUDGE_EXPENSIVE = "openai/gpt-4o"
+JUDGE_EXPENSIVE = "vertex_ai/gemini-3.1-pro-preview"
+
+SAMPLE_TIMEOUT = 180
+
+
+class _SampleTimeout(Exception):
+    pass
+
+
+def _alarm_handler(signum, frame):
+    raise _SampleTimeout("sample timeout")
 
 
 def main(resume: bool = False) -> tuple[Path, Path]:
@@ -63,7 +74,7 @@ def main(resume: bool = False) -> tuple[Path, Path]:
     expensive_path = _run_evaluation(
         all_samples,
         judge_model=JUDGE_EXPENSIVE,
-        label="gpt4o",
+        label="gemini_pro",
         run_ragas=False,
         run_safety=False,
         ragas_safety_cache=ragas_safety_cache,
@@ -87,6 +98,8 @@ def _run_evaluation(
     from src.evaluation.llm_judge import judge_response
     from src.evaluation.ragas_metrics import evaluate_ragas
     from src.evaluation.safety_metrics import evaluate_safety
+
+    old_handler = signal.signal(signal.SIGALRM, _alarm_handler)
 
     cost_tracker = CostTracker()
     checkpoint_dir = OUTPUT_DIR / "checkpoint"
@@ -123,57 +136,74 @@ def _run_evaluation(
 
         eval_entry: dict = {}
 
-        if run_ragas:
-            try:
-                ragas = evaluate_ragas(question, contexts, answer, ground_truth)
-                eval_entry["ragas"] = {
-                    "faithfulness": ragas.faithfulness,
-                    "answer_relevancy": ragas.answer_relevancy,
-                    "context_precision": ragas.context_precision,
-                    "context_recall": ragas.context_recall,
-                }
-            except Exception:
-                logger.exception("[%d/%d] %s RAGAS 실패", idx + 1, total, sample_id)
-                eval_entry["ragas"] = None
-        elif ragas_safety_cache and unique_key in ragas_safety_cache:
-            eval_entry["ragas"] = ragas_safety_cache[unique_key].get("ragas")
-        else:
-            eval_entry["ragas"] = None
-
+        signal.alarm(SAMPLE_TIMEOUT)
         try:
-            with Timer() as jt:
-                judge = judge_response(question, contexts, answer, judge_model=judge_model)
+            if run_ragas:
+                try:
+                    ragas = evaluate_ragas(question, contexts, answer, ground_truth)
+                    eval_entry["ragas"] = {
+                        "faithfulness": ragas.faithfulness,
+                        "answer_relevancy": ragas.answer_relevancy,
+                        "context_precision": ragas.context_precision,
+                        "context_recall": ragas.context_recall,
+                    }
+                except _SampleTimeout:
+                    raise
+                except Exception:
+                    logger.exception("[%d/%d] %s RAGAS 실패", idx + 1, total, sample_id)
+                    eval_entry["ragas"] = None
+            elif ragas_safety_cache and unique_key in ragas_safety_cache:
+                eval_entry["ragas"] = ragas_safety_cache[unique_key].get("ragas")
+            else:
+                eval_entry["ragas"] = None
 
-            eval_entry["judge"] = {
-                "citation_accuracy": judge.citation_accuracy,
-                "completeness": judge.completeness,
-                "readability": judge.readability,
-                "average": judge.average,
-                "raw_scores": _format_raw_scores(judge.raw_scores),
-            }
-            eval_entry["judge_latency"] = jt.elapsed
-        except Exception:
-            logger.exception("[%d/%d] %s Judge 실패", idx + 1, total, sample_id)
-            eval_entry["judge"] = None
-            eval_entry["judge_latency"] = 0.0
-
-        if run_safety:
             try:
-                safety = evaluate_safety(question, contexts, answer)
-                eval_entry["safety"] = {"hallucination_score": safety.hallucination_score}
+                with Timer() as jt:
+                    judge = judge_response(question, contexts, answer, judge_model=judge_model)
+
+                eval_entry["judge"] = {
+                    "citation_accuracy": judge.citation_accuracy,
+                    "completeness": judge.completeness,
+                    "readability": judge.readability,
+                    "average": judge.average,
+                    "raw_scores": _format_raw_scores(judge.raw_scores),
+                }
+                eval_entry["judge_latency"] = jt.elapsed
+            except _SampleTimeout:
+                raise
             except Exception:
-                logger.exception("[%d/%d] %s Safety 실패", idx + 1, total, sample_id)
+                logger.exception("[%d/%d] %s Judge 실패", idx + 1, total, sample_id)
+                eval_entry["judge"] = None
+                eval_entry["judge_latency"] = 0.0
+
+            if run_safety:
+                try:
+                    safety = evaluate_safety(question, contexts, answer)
+                    eval_entry["safety"] = {"hallucination_score": safety.hallucination_score}
+                except _SampleTimeout:
+                    raise
+                except Exception:
+                    logger.exception("[%d/%d] %s Safety 실패", idx + 1, total, sample_id)
+                    eval_entry["safety"] = None
+            elif ragas_safety_cache and unique_key in ragas_safety_cache:
+                eval_entry["safety"] = ragas_safety_cache[unique_key].get("safety")
+            else:
                 eval_entry["safety"] = None
-        elif ragas_safety_cache and unique_key in ragas_safety_cache:
-            eval_entry["safety"] = ragas_safety_cache[unique_key].get("safety")
-        else:
-            eval_entry["safety"] = None
+
+        except _SampleTimeout:
+            logger.error("[%d/%d] %s/%s — %ds 타임아웃, 건너뜀", idx + 1, total, cond, sample_id, SAMPLE_TIMEOUT)
+            eval_entry = {"ragas": eval_entry.get("ragas"), "judge": eval_entry.get("judge"), "safety": eval_entry.get("safety")}
+        finally:
+            signal.alarm(0)
 
         evaluated.append({**sample, "eval": eval_entry})
         logger.info("[%d/%d] %s/%s — 평가 완료", idx + 1, total, cond, sample_id)
 
         if (idx + 1) % CHECKPOINT_INTERVAL == 0:
             save_checkpoint({"results": evaluated}, checkpoint_dir, f"step3_{label}", idx + 1)
+            logger.info("[%s] 체크포인트 저장: %d건", label, len(evaluated))
+
+    signal.signal(signal.SIGALRM, old_handler)
 
     output = {
         "run_id": make_run_id(f"step3_{label}"),

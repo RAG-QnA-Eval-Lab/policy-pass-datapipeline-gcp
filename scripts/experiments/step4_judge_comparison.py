@@ -1,4 +1,4 @@
-"""실험 C: LLM Judge 비용-성능 분석 — GPT-4o vs GPT-4o-mini 통계 비교.
+"""실험 C: LLM Judge 비용-성능 분석 — Gemini 2.5 Pro vs GPT-4o-mini 통계 비교.
 
 LLM 호출 없음 — step3의 결과 JSON 2개를 비교 분석.
 
@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 OUTPUT_DIR = BASE_OUTPUT_DIR / "step4_judge_comparison"
 
 EVAL_PRIMARY_PATH = BASE_OUTPUT_DIR / "step3_evaluation" / "eval_gpt4o_mini_judge.json"
-EVAL_EXPENSIVE_PATH = BASE_OUTPUT_DIR / "step3_evaluation" / "eval_gpt4o_judge.json"
+EVAL_EXPENSIVE_PATH = BASE_OUTPUT_DIR / "step3_evaluation" / "eval_gemini_pro_judge.json"
 
 JUDGE_METRICS = ["citation_accuracy", "completeness", "readability", "average"]
 
@@ -50,7 +50,7 @@ def main() -> Path:
         "run_id": make_run_id("step4"),
         "config": {
             "primary_judge": "openai/gpt-4o-mini",
-            "expensive_judge": "openai/gpt-4o",
+            "expensive_judge": "vertex_ai/gemini-3.1-pro-preview",
             "sample_count": len(pairs),
         },
         "agreement_metrics": agreement,
@@ -78,8 +78,15 @@ def _align_samples(
         if key in expensive_map:
             p_eval = s.get("eval")
             e_eval = expensive_map[key].get("eval")
-            if p_eval and e_eval and p_eval.get("judge") and e_eval.get("judge"):
-                pairs.append((s, expensive_map[key]))
+            if not (p_eval and e_eval):
+                continue
+            p_judge = p_eval.get("judge")
+            e_judge = e_eval.get("judge")
+            if not (p_judge and e_judge):
+                continue
+            if p_judge.get("average", 0) == 0 or e_judge.get("average", 0) == 0:
+                continue
+            pairs.append((s, expensive_map[key]))
     return pairs
 
 
@@ -140,7 +147,7 @@ def _compute_cost_comparison(primary_data: dict, expensive_data: dict) -> dict:
             "estimated_usd": p_usd,
             "total_calls": primary_cost.get("total_calls", 0),
         },
-        "gpt-4o": {
+        "gemini-3.1-pro": {
             "estimated_usd": e_usd,
             "total_calls": expensive_cost.get("total_calls", 0),
         },
