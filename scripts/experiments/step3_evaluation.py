@@ -192,7 +192,11 @@ def _run_evaluation(
 
         except _SampleTimeout:
             logger.error("[%d/%d] %s/%s — %ds 타임아웃, 건너뜀", idx + 1, total, cond, sample_id, SAMPLE_TIMEOUT)
-            eval_entry = {"ragas": eval_entry.get("ragas"), "judge": eval_entry.get("judge"), "safety": eval_entry.get("safety")}
+            eval_entry = {
+                "ragas": eval_entry.get("ragas"),
+                "judge": eval_entry.get("judge"),
+                "safety": eval_entry.get("safety"),
+            }
         finally:
             signal.alarm(0)
 

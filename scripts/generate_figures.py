@@ -12,7 +12,6 @@ from pathlib import Path
 
 import matplotlib
 import matplotlib.pyplot as plt
-import numpy as np
 
 matplotlib.rcParams["font.family"] = ["AppleGothic", "Malgun Gothic", "NanumGothic", "sans-serif"]
 matplotlib.rcParams["axes.unicode_minus"] = False
@@ -53,10 +52,6 @@ def fig4_judge_scatter() -> Path:
             zorder=5,
             label=f'{name} (Class Agr. {vals["class_agr"]:.1f}%)',
         )
-        offset_x = 0.015
-        offset_y = 0.012
-        if name == "Average":
-            offset_y = -0.022
         ax.annotate(
             name,
             (vals["mae"], vals["tau"]),

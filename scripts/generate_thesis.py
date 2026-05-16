@@ -16,7 +16,7 @@ from docx.enum.section import WD_ORIENT
 from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
-from docx.shared import Cm, Pt
+from docx.shared import Cm
 
 TEMPLATE = Path("docs/졸업논문_김대현_2026.docx")
 OUTPUT = Path("docs/졸업논문_김대현_2026_완성.docx")
@@ -748,7 +748,10 @@ class ThesisWriter:
                 ["입력 토큰 비용 비율", "13.3배", "GPT-4o-mini $0.15 vs Gemini 3.1 Pro $2.00 /1M"],
                 ["출력 토큰 비용 비율", "20.0배", "GPT-4o-mini $0.60 vs Gemini 3.1 Pro $12.00 /1M"],
             ],
-            caption="표 10. Judge 모델 비용-성능 비교 (GPT-4o-mini vs Gemini 3.1 Pro, N=267). 가격은 2026년 5월 공식 API 가격표 기준.",
+            caption=(
+                "표 10. Judge 모델 비용-성능 비교 (GPT-4o-mini vs Gemini 3.1 Pro, N=267)."
+                " 가격은 2026년 5월 공식 API 가격표 기준."
+            ),
         )
         self.p(
             "Class Agreement Rate가 90.3%로, 3등급 분류(low/mid/high) 기준 10건 중 9건에서 "
