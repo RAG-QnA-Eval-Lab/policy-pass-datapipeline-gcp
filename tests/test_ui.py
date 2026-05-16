@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+import pytest
+
+pytest.importorskip("streamlit", reason="streamlit not installed — skipping UI tests")
+
 from unittest.mock import MagicMock, patch
 
 import httpx
