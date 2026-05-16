@@ -66,24 +66,28 @@ def _show_average_chart(items: list[dict[str, Any]]) -> None:
     if ragas_sums:
         labels = list(ragas_sums.keys())
         avgs = [ragas_sums[k] / ragas_counts[k] for k in labels]
-        fig.add_trace(go.Bar(
-            name="RAGAS",
-            x=labels,
-            y=avgs,
-            marker_color="#5E6AD2",
-            marker_line_width=0,
-        ))
+        fig.add_trace(
+            go.Bar(
+                name="RAGAS",
+                x=labels,
+                y=avgs,
+                marker_color="#5E6AD2",
+                marker_line_width=0,
+            )
+        )
 
     if judge_sums:
         labels = list(judge_sums.keys())
         avgs = [judge_sums[k] / judge_counts[k] for k in labels]
-        fig.add_trace(go.Bar(
-            name="LLM Judge",
-            x=labels,
-            y=avgs,
-            marker_color="#6C72CB",
-            marker_line_width=0,
-        ))
+        fig.add_trace(
+            go.Bar(
+                name="LLM Judge",
+                x=labels,
+                y=avgs,
+                marker_color="#6C72CB",
+                marker_line_width=0,
+            )
+        )
 
     fig.update_layout(
         title=dict(text="평균 메트릭 점수", font=dict(size=14, family="Inter", color="#0A0A0B")),

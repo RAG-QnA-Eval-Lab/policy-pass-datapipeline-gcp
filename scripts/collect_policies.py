@@ -32,9 +32,20 @@ COLLECTORS: dict[str, type[BaseCollector]] = {
 }
 
 _MONGO_FIELDS: tuple[str, ...] = (
-    "policy_id", "title", "category", "summary", "description",
-    "eligibility", "benefits", "how_to_apply", "application_period",
-    "managing_department", "region", "source_url", "source_name", "last_updated",
+    "policy_id",
+    "title",
+    "category",
+    "summary",
+    "description",
+    "eligibility",
+    "benefits",
+    "how_to_apply",
+    "application_period",
+    "managing_department",
+    "region",
+    "source_url",
+    "source_name",
+    "last_updated",
 )
 
 

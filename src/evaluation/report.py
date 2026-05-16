@@ -241,7 +241,7 @@ def _build_html_report(report: dict) -> str:
       </tr>
     </thead>
     <tbody>
-      {''.join(rows)}
+      {"".join(rows)}
     </tbody>
   </table>
 </body>

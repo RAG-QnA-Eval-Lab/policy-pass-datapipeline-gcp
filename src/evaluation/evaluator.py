@@ -87,15 +87,17 @@ class RAGEvaluator:
                     answer=sample.get("answer", ""),
                     ground_truth=sample.get("ground_truth", ""),
                 )
-                results.append({
-                    **sample,
-                    "eval_result": {
-                        "ragas": _ragas_to_dict(eval_result.ragas),
-                        "judge": _judge_to_dict(eval_result.judge),
-                        "safety": _safety_to_dict(eval_result.safety),
-                        "latency": eval_result.latency,
-                    },
-                })
+                results.append(
+                    {
+                        **sample,
+                        "eval_result": {
+                            "ragas": _ragas_to_dict(eval_result.ragas),
+                            "judge": _judge_to_dict(eval_result.judge),
+                            "safety": _safety_to_dict(eval_result.safety),
+                            "latency": eval_result.latency,
+                        },
+                    }
+                )
                 logger.info("[%d/%d] %s — 평가 완료 (%.1fs)", idx + 1, total, sample_id, eval_result.latency)
 
             except Exception:
@@ -107,9 +109,7 @@ class RAGEvaluator:
 
         return results
 
-    def _run_ragas(
-        self, question: str, contexts: list[str], answer: str, ground_truth: str
-    ) -> RagasResult | None:
+    def _run_ragas(self, question: str, contexts: list[str], answer: str, ground_truth: str) -> RagasResult | None:
         try:
             from src.evaluation.ragas_metrics import evaluate_ragas
 

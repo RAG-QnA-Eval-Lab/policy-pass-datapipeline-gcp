@@ -65,17 +65,27 @@ class TestScorePolicyRichness:
 
     def test_minimal_policy(self) -> None:
         p = _make_policy(
-            summary="", description="", eligibility="",
-            benefits="", how_to_apply="", application_period="",
-            managing_department="", raw_content="짧음",
+            summary="",
+            description="",
+            eligibility="",
+            benefits="",
+            how_to_apply="",
+            application_period="",
+            managing_department="",
+            raw_content="짧음",
         )
         assert score_policy_richness(p) < 4
 
     def test_medium_policy(self) -> None:
         p = _make_policy(
-            summary="요약", description="", eligibility="",
-            benefits="혜택", how_to_apply="", application_period="",
-            managing_department="", raw_content="x" * 300,
+            summary="요약",
+            description="",
+            eligibility="",
+            benefits="혜택",
+            how_to_apply="",
+            application_period="",
+            managing_department="",
+            raw_content="x" * 300,
         )
         score = score_policy_richness(p)
         assert 3 <= score <= 5
@@ -88,9 +98,14 @@ class TestQaCountForPolicy:
 
     def test_sparse_policy_gets_2(self) -> None:
         p = _make_policy(
-            summary="요약", description="", eligibility="",
-            benefits="", how_to_apply="", application_period="",
-            managing_department="", raw_content="x" * 300,
+            summary="요약",
+            description="",
+            eligibility="",
+            benefits="",
+            how_to_apply="",
+            application_period="",
+            managing_department="",
+            raw_content="x" * 300,
         )
         assert qa_count_for_policy(p) == 2
 
@@ -100,13 +115,21 @@ class TestSelectPolicies:
         policies = []
         for cat in ["housing", "employment", "education", "welfare"]:
             for i in range(20):
-                policies.append(_make_policy(
-                    category=cat, policy_id=f"{cat}_{i}", title=f"{cat} 정책 {i}",
-                ))
+                policies.append(
+                    _make_policy(
+                        category=cat,
+                        policy_id=f"{cat}_{i}",
+                        title=f"{cat} 정책 {i}",
+                    )
+                )
         for i in range(10):
-            policies.append(_make_policy(
-                category="participation", policy_id=f"part_{i}", title=f"참여 정책 {i}",
-            ))
+            policies.append(
+                _make_policy(
+                    category="participation",
+                    policy_id=f"part_{i}",
+                    title=f"참여 정책 {i}",
+                )
+            )
         return policies
 
     def test_includes_participation(self) -> None:
@@ -136,9 +159,14 @@ class TestSelectPolicies:
     def test_empty_on_no_rich_policies(self) -> None:
         sparse = [
             _make_policy(
-                summary="", description="", eligibility="",
-                benefits="", how_to_apply="", application_period="",
-                managing_department="", raw_content="짧",
+                summary="",
+                description="",
+                eligibility="",
+                benefits="",
+                how_to_apply="",
+                application_period="",
+                managing_department="",
+                raw_content="짧",
             )
         ]
         selected = select_policies(sparse, target_count=10, min_richness=4)
@@ -149,24 +177,36 @@ class TestFindComparisonGroups:
     def _policies_with_themes(self) -> list[dict]:
         policies = []
         for i in range(5):
-            policies.append(_make_policy(
-                category="housing", policy_id=f"h_rent_{i}",
-                title=f"청년 월세 지원 사업 {i}",
-            ))
+            policies.append(
+                _make_policy(
+                    category="housing",
+                    policy_id=f"h_rent_{i}",
+                    title=f"청년 월세 지원 사업 {i}",
+                )
+            )
         for i in range(3):
-            policies.append(_make_policy(
-                category="employment", policy_id=f"e_job_{i}",
-                title=f"청년 취업 지원 프로그램 {i}",
-            ))
+            policies.append(
+                _make_policy(
+                    category="employment",
+                    policy_id=f"e_job_{i}",
+                    title=f"청년 취업 지원 프로그램 {i}",
+                )
+            )
         for i in range(3):
-            policies.append(_make_policy(
-                category="employment", policy_id=f"e_biz_{i}",
-                title=f"청년 창업 지원 사업 {i}",
-            ))
-        policies.append(_make_policy(
-            category="welfare", policy_id="w_lone",
-            title="고독한 복지 정책",
-        ))
+            policies.append(
+                _make_policy(
+                    category="employment",
+                    policy_id=f"e_biz_{i}",
+                    title=f"청년 창업 지원 사업 {i}",
+                )
+            )
+        policies.append(
+            _make_policy(
+                category="welfare",
+                policy_id="w_lone",
+                title="고독한 복지 정책",
+            )
+        )
         return policies
 
     def test_finds_groups(self) -> None:
@@ -189,10 +229,7 @@ class TestFindComparisonGroups:
         assert len(groups) <= 2
 
     def test_empty_when_no_themes_match(self) -> None:
-        policies = [
-            _make_policy(category="housing", policy_id=f"h_{i}", title=f"기타 정책 {i}")
-            for i in range(5)
-        ]
+        policies = [_make_policy(category="housing", policy_id=f"h_{i}", title=f"기타 정책 {i}") for i in range(5)]
         groups = find_comparison_groups(policies)
         assert groups == []
 
@@ -213,10 +250,17 @@ class TestParseQaResponse:
         assert result[0]["question"] == "질문1"
 
     def test_markdown_fenced(self) -> None:
-        inner = json.dumps([{
-            "question": "Q", "ground_truth": "A",
-            "difficulty": "medium", "qa_type": "reasoning",
-        }], ensure_ascii=False)
+        inner = json.dumps(
+            [
+                {
+                    "question": "Q",
+                    "ground_truth": "A",
+                    "difficulty": "medium",
+                    "qa_type": "reasoning",
+                }
+            ],
+            ensure_ascii=False,
+        )
         raw = f"```json\n{inner}\n```"
         result = parse_qa_response(raw)
         assert result is not None
@@ -254,6 +298,7 @@ class TestPlanDifficultyAssignments:
         assignments = plan_difficulty_assignments([2] * 40)
         flat = [d for group in assignments for d in group]
         from collections import Counter
+
         counts = Counter(flat)
         assert counts["easy"] == 32
         assert counts["medium"] == 32
@@ -302,10 +347,7 @@ class TestBuildComparisonPrompt:
         assert "comparison" in msgs[1]["content"]
 
     def test_three_policies(self) -> None:
-        group = [
-            _make_policy(title=f"정책 {c}", policy_id=c)
-            for c in ["X", "Y", "Z"]
-        ]
+        group = [_make_policy(title=f"정책 {c}", policy_id=c) for c in ["X", "Y", "Z"]]
         msgs = build_comparison_prompt(group, 2, ["easy", "medium"], "sys")
         content = msgs[1]["content"]
         assert "3개 정책" in content
@@ -330,17 +372,25 @@ class TestAssembleOutput:
     def test_structure(self) -> None:
         pairs = [
             {
-                "question": "Q1", "ground_truth": "A1",
-                "difficulty": "easy", "qa_type": "factual",
-                "category": "housing", "policy_title": "T1",
-                "policy_id": "P1", "reference_doc": "d.json",
+                "question": "Q1",
+                "ground_truth": "A1",
+                "difficulty": "easy",
+                "qa_type": "factual",
+                "category": "housing",
+                "policy_title": "T1",
+                "policy_id": "P1",
+                "reference_doc": "d.json",
                 "reference_source": "data_portal",
             },
             {
-                "question": "Q2", "ground_truth": "A2",
-                "difficulty": "medium", "qa_type": "comparison",
-                "category": "employment", "policy_title": "T2",
-                "policy_id": "P2", "reference_doc": "d.json",
+                "question": "Q2",
+                "ground_truth": "A2",
+                "difficulty": "medium",
+                "qa_type": "comparison",
+                "category": "employment",
+                "policy_title": "T2",
+                "policy_id": "P2",
+                "reference_doc": "d.json",
                 "reference_source": "data_portal",
             },
         ]
@@ -354,10 +404,17 @@ class TestAssembleOutput:
 
     def test_sequential_ids(self) -> None:
         pairs = [
-            {"question": f"Q{i}", "ground_truth": f"A{i}",
-             "difficulty": "easy", "qa_type": "factual",
-             "category": "housing", "policy_title": "T", "policy_id": "P",
-             "reference_doc": "d", "reference_source": "s"}
+            {
+                "question": f"Q{i}",
+                "ground_truth": f"A{i}",
+                "difficulty": "easy",
+                "qa_type": "factual",
+                "category": "housing",
+                "policy_title": "T",
+                "policy_id": "P",
+                "reference_doc": "d",
+                "reference_source": "s",
+            }
             for i in range(5)
         ]
         result = assemble_output(pairs, "m", {"gcs_uri": "gs://bucket/prompts/x.txt", "sha256": "abc"})
@@ -367,16 +424,26 @@ class TestAssembleOutput:
 
 class TestGenerateQaForPolicy:
     def test_success(self) -> None:
-        mock_content = json.dumps([
-            {"question": "Q", "ground_truth": "A", "difficulty": "easy", "qa_type": "factual"},
-        ], ensure_ascii=False)
+        mock_content = json.dumps(
+            [
+                {"question": "Q", "ground_truth": "A", "difficulty": "easy", "qa_type": "factual"},
+            ],
+            ensure_ascii=False,
+        )
         mock_resp = LLMResponse(
-            content=mock_content, model="openai/gpt-4o-mini",
-            prompt_tokens=100, completion_tokens=50, total_tokens=150, latency=0.5,
+            content=mock_content,
+            model="openai/gpt-4o-mini",
+            prompt_tokens=100,
+            completion_tokens=50,
+            total_tokens=150,
+            latency=0.5,
         )
         with patch("scripts.generate_qa.generate", return_value=mock_resp):
             result = generate_qa_for_policy(
-                _make_policy(), qa_count=1, difficulties=["easy"], system_prompt="prompt",
+                _make_policy(),
+                qa_count=1,
+                difficulties=["easy"],
+                system_prompt="prompt",
             )
         assert result is not None
         assert len(result) == 1
@@ -387,19 +454,29 @@ class TestGenerateQaForPolicy:
     def test_failure(self) -> None:
         with patch("scripts.generate_qa.generate", side_effect=RuntimeError("API error")):
             result = generate_qa_for_policy(
-                _make_policy(), qa_count=1, difficulties=["easy"], system_prompt="prompt",
+                _make_policy(),
+                qa_count=1,
+                difficulties=["easy"],
+                system_prompt="prompt",
             )
         assert result is None
 
 
 class TestGenerateComparisonQa:
     def test_success(self) -> None:
-        mock_content = json.dumps([
-            {"question": "A vs B?", "ground_truth": "차이점은...", "difficulty": "hard", "qa_type": "comparison"},
-        ], ensure_ascii=False)
+        mock_content = json.dumps(
+            [
+                {"question": "A vs B?", "ground_truth": "차이점은...", "difficulty": "hard", "qa_type": "comparison"},
+            ],
+            ensure_ascii=False,
+        )
         mock_resp = LLMResponse(
-            content=mock_content, model="vertex_ai/gemini-2.5-flash",
-            prompt_tokens=200, completion_tokens=80, total_tokens=280, latency=1.0,
+            content=mock_content,
+            model="vertex_ai/gemini-2.5-flash",
+            prompt_tokens=200,
+            completion_tokens=80,
+            total_tokens=280,
+            latency=1.0,
         )
         group = [
             _make_policy(title="정책 A", policy_id="A"),
@@ -407,7 +484,10 @@ class TestGenerateComparisonQa:
         ]
         with patch("scripts.generate_qa.generate", return_value=mock_resp):
             result = generate_comparison_qa(
-                group, qa_count=1, difficulties=["hard"], system_prompt="prompt",
+                group,
+                qa_count=1,
+                difficulties=["hard"],
+                system_prompt="prompt",
             )
         assert result is not None
         assert len(result) == 1
@@ -423,6 +503,9 @@ class TestGenerateComparisonQa:
         ]
         with patch("scripts.generate_qa.generate", side_effect=RuntimeError("API error")):
             result = generate_comparison_qa(
-                group, qa_count=1, difficulties=["hard"], system_prompt="prompt",
+                group,
+                qa_count=1,
+                difficulties=["hard"],
+                system_prompt="prompt",
             )
         assert result is None

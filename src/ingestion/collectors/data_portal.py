@@ -123,9 +123,15 @@ class DataPortalCollector(BaseCollector):
         region = item.get("zipCd", "").strip() or "전국"
 
         raw = _build_raw_content_from_fields(
-            title=title, summary=summary, description=description, eligibility=eligibility,
-            benefits=benefits, how_to_apply=how_to_apply, app_period=app_period,
-            managing_dept=managing_dept, region=region,
+            title=title,
+            summary=summary,
+            description=description,
+            eligibility=eligibility,
+            benefits=benefits,
+            how_to_apply=how_to_apply,
+            app_period=app_period,
+            managing_dept=managing_dept,
+            region=region,
         )
         return Policy(
             policy_id=policy_id,
@@ -148,9 +154,16 @@ class DataPortalCollector(BaseCollector):
 
 
 def _build_raw_content_from_fields(
-    *, title: str, summary: str, description: str, eligibility: str,
-    benefits: str, how_to_apply: str, app_period: str,
-    managing_dept: str, region: str,
+    *,
+    title: str,
+    summary: str,
+    description: str,
+    eligibility: str,
+    benefits: str,
+    how_to_apply: str,
+    app_period: str,
+    managing_dept: str,
+    region: str,
 ) -> str:
     parts = [
         f"정책명: {title}",

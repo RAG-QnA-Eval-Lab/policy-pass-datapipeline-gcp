@@ -30,6 +30,7 @@ NO_RAG_SYSTEM_PROMPT = (
 
 def _replace_region_codes(text: str) -> str:
     """청크 텍스트 내 '지역: 11,26' 형태의 숫자 코드를 한국어 이름으로 변환."""
+
     def _convert(match: re.Match[str]) -> str:
         prefix = match.group(1)
         raw = match.group(2).strip()
@@ -78,10 +79,7 @@ def build_rag_prompt(
     """RAG 프롬프트 생성 — 검색 컨텍스트 포함."""
     context_text = _format_context(contexts)
 
-    user_content = (
-        f"참고 정책 문서:\n{context_text}\n\n"
-        f"질문: {query}"
-    )
+    user_content = f"참고 정책 문서:\n{context_text}\n\n질문: {query}"
 
     return [
         {"role": "system", "content": SYSTEM_PROMPT},

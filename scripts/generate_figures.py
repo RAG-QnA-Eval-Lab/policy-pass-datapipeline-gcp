@@ -50,7 +50,7 @@ def fig4_judge_scatter() -> Path:
             edgecolors="white",
             linewidths=1.5,
             zorder=5,
-            label=f'{name} (Class Agr. {vals["class_agr"]:.1f}%)',
+            label=f"{name} (Class Agr. {vals['class_agr']:.1f}%)",
         )
         ax.annotate(
             name,
@@ -192,11 +192,7 @@ def fig5_position_bias() -> Path:
         ax.set_title(name, fontsize=13, fontweight="bold", color=d["color"], pad=10)
         ax.set_xlabel("|Δ score| (원본 - 셔플)", fontsize=11)
 
-        info_text = (
-            f"≥1점 차이: {d['ge1_pct']}%\n"
-            f"최대 차이: {d['max_delta']}점\n"
-            f"Wilcoxon p={d['wilcoxon_p']:.3f}"
-        )
+        info_text = f"≥1점 차이: {d['ge1_pct']}%\n최대 차이: {d['max_delta']}점\nWilcoxon p={d['wilcoxon_p']:.3f}"
         ax.text(
             0.97,
             0.97,

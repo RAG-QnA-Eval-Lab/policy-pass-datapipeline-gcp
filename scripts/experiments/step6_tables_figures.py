@@ -75,15 +75,17 @@ def _build_table6_retrieval() -> list[dict]:
         cr_vals = [s["context_recall"] for s in samples if s.get("context_recall") is not None]
         lat_vals = [s["retrieval_latency"] for s in samples if s.get("retrieval_latency") is not None]
 
-        rows.append({
-            "strategy": strategy,
-            "context_precision_mean": round(float(np.mean(cp_vals)), 4) if cp_vals else None,
-            "context_precision_std": round(float(np.std(cp_vals)), 4) if cp_vals else None,
-            "context_recall_mean": round(float(np.mean(cr_vals)), 4) if cr_vals else None,
-            "context_recall_std": round(float(np.std(cr_vals)), 4) if cr_vals else None,
-            "latency_mean": round(float(np.mean(lat_vals)), 4) if lat_vals else None,
-            "sample_count": len(samples),
-        })
+        rows.append(
+            {
+                "strategy": strategy,
+                "context_precision_mean": round(float(np.mean(cp_vals)), 4) if cp_vals else None,
+                "context_precision_std": round(float(np.std(cp_vals)), 4) if cp_vals else None,
+                "context_recall_mean": round(float(np.mean(cr_vals)), 4) if cr_vals else None,
+                "context_recall_std": round(float(np.std(cr_vals)), 4) if cr_vals else None,
+                "latency_mean": round(float(np.mean(lat_vals)), 4) if lat_vals else None,
+                "sample_count": len(samples),
+            }
+        )
 
     logger.info("표 6: %d개 전략 집계", len(rows))
     return rows
@@ -135,12 +137,14 @@ def _build_tables7_8_9_generation() -> tuple[list[dict], list[dict], list[dict]]
                 for s in valid_safety
                 if s["eval"]["safety"].get("hallucination_score") is not None
             ]
-            safety_rows.append({
-                "condition": cond,
-                "count": len(valid_safety),
-                "hallucination_mean": round(float(np.mean(h_vals)), 4) if h_vals else None,
-                "hallucination_std": round(float(np.std(h_vals)), 4) if h_vals else None,
-            })
+            safety_rows.append(
+                {
+                    "condition": cond,
+                    "count": len(valid_safety),
+                    "hallucination_mean": round(float(np.mean(h_vals)), 4) if h_vals else None,
+                    "hallucination_std": round(float(np.std(h_vals)), 4) if h_vals else None,
+                }
+            )
 
     logger.info("표 7: %d조건, 표 8: %d조건, 표 9: %d조건", len(ragas_rows), len(judge_rows), len(safety_rows))
     return ragas_rows, judge_rows, safety_rows
@@ -181,7 +185,9 @@ def _build_table10_judge_cost() -> dict:
 
     logger.info(
         "표 10: τ=%s, MAE=%s, 비용비=%s",
-        avg_metrics.get("kendall_tau"), avg_metrics.get("mae"), cost.get("cost_ratio"),
+        avg_metrics.get("kendall_tau"),
+        avg_metrics.get("mae"),
+        cost.get("cost_ratio"),
     )
     return table
 
@@ -263,13 +269,15 @@ def _fig_radar_ragas(ragas_rows: list[dict], figures_dir: Path, go: object) -> N
     for row in ragas_rows:
         values = [row.get(k, 0) or 0 for k in cat_keys]
         values.append(values[0])
-        fig.add_trace(go.Scatterpolar(
-            r=values,
-            theta=categories + [categories[0]],
-            fill="toself",
-            name=row["condition"],
-            opacity=0.7,
-        ))
+        fig.add_trace(
+            go.Scatterpolar(
+                r=values,
+                theta=categories + [categories[0]],
+                fill="toself",
+                name=row["condition"],
+                opacity=0.7,
+            )
+        )
 
     fig.update_layout(
         polar={"radialaxis": {"visible": True, "range": [0, 1]}},
@@ -302,16 +310,18 @@ def _fig_judge_heatmap(judge_rows: list[dict], figures_dir: Path, go: object) ->
         z.append([row.get(m, 0) or 0 for m in metrics])
         y_labels.append(row["condition"])
 
-    fig = go.Figure(data=go.Heatmap(
-        z=z,
-        x=labels,
-        y=y_labels,
-        colorscale="RdYlGn",
-        zmin=1,
-        zmax=5,
-        text=[[f"{v:.2f}" for v in row] for row in z],
-        texttemplate="%{text}",
-    ))
+    fig = go.Figure(
+        data=go.Heatmap(
+            z=z,
+            x=labels,
+            y=y_labels,
+            colorscale="RdYlGn",
+            zmin=1,
+            zmax=5,
+            text=[[f"{v:.2f}" for v in row] for row in z],
+            texttemplate="%{text}",
+        )
+    )
 
     fig.update_layout(title="모델별 Judge 점수 히트맵", height=max(400, len(y_labels) * 50))
 
@@ -346,13 +356,15 @@ def _fig_detection_bar(detection: dict, figures_dir: Path, go: object) -> None:
         + ["#E45756"] * len(detection.get("three_stage_union", {}))
     )
 
-    fig = go.Figure(data=go.Bar(
-        x=categories,
-        y=rates,
-        marker_color=colors,
-        text=[f"{r:.1f}%" for r in rates],
-        textposition="auto",
-    ))
+    fig = go.Figure(
+        data=go.Bar(
+            x=categories,
+            y=rates,
+            marker_color=colors,
+            text=[f"{r:.1f}%" for r in rates],
+            textposition="auto",
+        )
+    )
 
     fig.update_layout(
         title="평가 단계별 문제 탐지율 비교",
@@ -380,11 +392,13 @@ def _fig_bias_histogram(bias: dict, figures_dir: Path, go: object) -> None:
             continue
         x_vals = sorted(delta_dist.keys(), key=lambda v: float(v))
         y_vals = [delta_dist[k] for k in x_vals]
-        fig.add_trace(go.Bar(
-            x=[f"Δ={v}" for v in x_vals],
-            y=y_vals,
-            name=metric,
-        ))
+        fig.add_trace(
+            go.Bar(
+                x=[f"Δ={v}" for v in x_vals],
+                y=y_vals,
+                name=metric,
+            )
+        )
 
     fig.update_layout(
         title="Position Bias: 원본-셔플 점수 차이 분포",
@@ -416,15 +430,17 @@ def _fig_cost_scatter(cost_table: dict, figures_dir: Path, go: object, make_subp
         tau = info.get("kendall_tau")
         mae = info.get("mae")
         if tau is not None and mae is not None:
-            fig.add_trace(go.Scatter(
-                x=[mae],
-                y=[tau],
-                mode="markers+text",
-                text=[metric],
-                textposition="top center",
-                name=metric,
-                marker={"size": 12},
-            ))
+            fig.add_trace(
+                go.Scatter(
+                    x=[mae],
+                    y=[tau],
+                    mode="markers+text",
+                    text=[metric],
+                    textposition="top center",
+                    name=metric,
+                    marker={"size": 12},
+                )
+            )
 
     fig.update_layout(
         title="GPT-4o-mini vs Gemini 3.1 Pro: 메트릭별 일치도",

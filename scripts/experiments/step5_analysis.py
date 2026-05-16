@@ -113,7 +113,12 @@ def _analyze_position_bias(samples: list[dict]) -> Path:
 
         logger.info(
             "  %s: mean_|Δ|=%.3f, ≥1점차=%d/%d (%.1f%%), Wilcoxon p=%.4f",
-            metric, np.mean(deltas), ge1_count, n, ge1_count / n * 100, p_val,
+            metric,
+            np.mean(deltas),
+            ge1_count,
+            n,
+            ge1_count / n * 100,
+            p_val,
         )
 
     all_orig = []

@@ -104,26 +104,32 @@ def _resolve_steps(start: str | None, only: list[str] | None) -> list[str]:
 def _run_step(step: str, resume: bool = False) -> Path | tuple[Path, ...]:
     if step == "step1":
         from scripts.experiments.step1_retrieval import main as step1_main
+
         return step1_main(resume=resume)
 
     if step == "step2":
         from scripts.experiments.step2_generation import main as step2_main
+
         return step2_main(resume=resume)
 
     if step == "step3":
         from scripts.experiments.step3_evaluation import main as step3_main
+
         return step3_main(resume=resume)
 
     if step == "step4":
         from scripts.experiments.step4_judge_comparison import main as step4_main
+
         return step4_main()
 
     if step == "step5":
         from scripts.experiments.step5_analysis import main as step5_main
+
         return step5_main()
 
     if step == "step6":
         from scripts.experiments.step6_tables_figures import main as step6_main
+
         return step6_main()
 
     raise ValueError(f"알 수 없는 단계: {step}")

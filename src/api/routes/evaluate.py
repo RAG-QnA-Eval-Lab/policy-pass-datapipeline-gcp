@@ -44,16 +44,22 @@ def evaluate(request: Request, body: EvalRequest) -> EvalResponse:
                         answer_relevancy=er.ragas.answer_relevancy,
                         context_precision=er.ragas.context_precision,
                         context_recall=er.ragas.context_recall,
-                    ) if er.ragas else None,
+                    )
+                    if er.ragas
+                    else None,
                     judge=JudgeScores(
                         citation_accuracy=er.judge.citation_accuracy,
                         completeness=er.judge.completeness,
                         readability=er.judge.readability,
                         average=er.judge.average,
-                    ) if er.judge else None,
+                    )
+                    if er.judge
+                    else None,
                     safety=SafetyScores(
                         hallucination_score=er.safety.hallucination_score,
-                    ) if er.safety else None,
+                    )
+                    if er.safety
+                    else None,
                     latency=er.latency,
                 )
             )

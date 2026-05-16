@@ -78,8 +78,13 @@ def score_policy_richness(policy: dict) -> int:
     """정책 콘텐츠 풍부도 점수 (0~9). 높을수록 QA 생성에 적합."""
     score = 0
     info_fields = [
-        "summary", "description", "eligibility", "benefits",
-        "how_to_apply", "application_period", "managing_department",
+        "summary",
+        "description",
+        "eligibility",
+        "benefits",
+        "how_to_apply",
+        "application_period",
+        "managing_department",
     ]
     for field in info_fields:
         val = policy.get(field, "")
@@ -106,9 +111,7 @@ def select_policies(
 ) -> list[tuple[dict, int]]:
     """카테고리 균형 맞춰 정책 선택. (정책, QA수) 튜플 리스트 반환."""
     filtered = [
-        p for p in policies
-        if p.get("category") in TARGET_CATEGORIES
-        and score_policy_richness(p) >= min_richness
+        p for p in policies if p.get("category") in TARGET_CATEGORIES and score_policy_richness(p) >= min_richness
     ]
 
     if not filtered:
@@ -143,7 +146,10 @@ def select_policies(
     total_qa = sum(n for _, n in result)
     logger.info(
         "정책 %d건 선택 (총 후보 %d건, 카테고리 %s, 예상 QA %d개)",
-        len(result), len(filtered), sorted(available_cats), total_qa,
+        len(result),
+        len(filtered),
+        sorted(available_cats),
+        total_qa,
     )
     return result
 
@@ -155,9 +161,7 @@ def find_comparison_groups(
 ) -> list[list[dict]]:
     """같은 카테고리 내에서 유사 정책 그룹을 찾아 비교 QA 생성용으로 반환."""
     filtered = [
-        p for p in policies
-        if p.get("category") in TARGET_CATEGORIES
-        and score_policy_richness(p) >= min_richness
+        p for p in policies if p.get("category") in TARGET_CATEGORIES and score_policy_richness(p) >= min_richness
     ]
 
     by_cat: dict[str, list[dict]] = defaultdict(list)
@@ -171,9 +175,9 @@ def find_comparison_groups(
         if cat not in by_cat:
             continue
         matching = [
-            p for p in by_cat[cat]
-            if any(kw in (p.get("title", "") or "") for kw in keywords)
-            and p.get("policy_id", "") not in used_ids
+            p
+            for p in by_cat[cat]
+            if any(kw in (p.get("title", "") or "") for kw in keywords) and p.get("policy_id", "") not in used_ids
         ]
         if len(matching) < 2:
             continue
@@ -198,11 +202,7 @@ def plan_difficulty_assignments(qa_counts: list[int]) -> list[list[str]]:
     n_medium = round(total * 0.4)
     n_hard = total - n_easy - n_medium
 
-    pool = (
-        ["easy"] * n_easy
-        + ["medium"] * n_medium
-        + ["hard"] * n_hard
-    )
+    pool = ["easy"] * n_easy + ["medium"] * n_medium + ["hard"] * n_hard
     random.shuffle(pool)
 
     assignments: list[list[str]] = []
@@ -215,7 +215,10 @@ def plan_difficulty_assignments(qa_counts: list[int]) -> list[list[str]]:
 
 
 def build_qa_prompt(
-    policy: dict, qa_count: int, difficulties: list[str], system_prompt: str,
+    policy: dict,
+    qa_count: int,
+    difficulties: list[str],
+    system_prompt: str,
 ) -> list[dict[str, str]]:
     """개별 정책 QA 프롬프트 빌드."""
     diff_desc = ", ".join(f"{d} 1개" for d in difficulties)
@@ -233,9 +236,7 @@ def build_qa_prompt(
     policy_text += f"\n원문:\n{raw[:3000]}"
 
     user_msg = (
-        f"아래 정책 정보를 읽고 QA 쌍을 {qa_count}개 생성하세요.\n"
-        f"난이도 배분: {diff_desc}\n\n"
-        f"---\n{policy_text}\n---"
+        f"아래 정책 정보를 읽고 QA 쌍을 {qa_count}개 생성하세요.\n난이도 배분: {diff_desc}\n\n---\n{policy_text}\n---"
     )
 
     return [
@@ -245,7 +246,10 @@ def build_qa_prompt(
 
 
 def build_comparison_prompt(
-    group: list[dict], qa_count: int, difficulties: list[str], system_prompt: str,
+    group: list[dict],
+    qa_count: int,
+    difficulties: list[str],
+    system_prompt: str,
 ) -> list[dict[str, str]]:
     """비교 QA 프롬프트 빌드 — 2~3개 정책 정보를 함께 전달."""
     diff_desc = ", ".join(f"{d} 1개" for d in difficulties)
@@ -441,9 +445,9 @@ def generate_qa_dataset(
     max_comp_groups = max(1, math.ceil(comparison_target / 2))
     comparison_groups = find_comparison_groups(policies, max_groups=max_comp_groups)
     comp_qa_per_group = max(1, round(comparison_target / max(1, len(comparison_groups)))) if comparison_groups else 0
-    comp_assignments = plan_difficulty_assignments(
-        [comp_qa_per_group] * len(comparison_groups)
-    ) if comparison_groups else []
+    comp_assignments = (
+        plan_difficulty_assignments([comp_qa_per_group] * len(comparison_groups)) if comparison_groups else []
+    )
 
     if dry_run:
         cat_counts = Counter(p["category"] for p, _ in selected)
@@ -454,7 +458,12 @@ def generate_qa_dataset(
         for i, ((p, n), diffs) in enumerate(zip(selected, assignments), 1):
             logger.info(
                 "  %2d. [%s] %s (QA %d개, 난이도: %s, 풍부도: %d)",
-                i, p["category"], p["title"][:40], n, diffs, score_policy_richness(p),
+                i,
+                p["category"],
+                p["title"][:40],
+                n,
+                diffs,
+                score_policy_richness(p),
             )
         total_individual = sum(len(d) for d in assignments)
         logger.info("예상 개별 QA: %d개", total_individual)
@@ -474,7 +483,11 @@ def generate_qa_dataset(
     for i, ((policy, qa_n), diffs) in enumerate(zip(selected, assignments), 1):
         logger.info(
             "[%d/%d] %s (QA %d개, 난이도: %s)",
-            i, len(selected), policy["title"][:50], qa_n, diffs,
+            i,
+            len(selected),
+            policy["title"][:50],
+            qa_n,
+            diffs,
         )
         pairs = generate_qa_for_policy(policy, len(diffs), diffs, system_prompt, model)
         if pairs:
@@ -516,7 +529,11 @@ def generate_qa_dataset(
     type_dist = output["qa_type_distribution"]
     logger.info(
         "완료: %d개 QA 쌍 생성 (실패 %d건), 난이도 %s, 유형 %s → %s",
-        len(all_pairs), failures, diff_dist, type_dist, output_path,
+        len(all_pairs),
+        failures,
+        diff_dist,
+        type_dist,
+        output_path,
     )
     return output
 
@@ -524,11 +541,13 @@ def generate_qa_dataset(
 def main() -> None:
     parser = argparse.ArgumentParser(description="QA 평가 데이터셋 생성")
     parser.add_argument(
-        "--input", default="data/policies/normalized/all_policies.json",
+        "--input",
+        default="data/policies/normalized/all_policies.json",
         help="정책 데이터 JSON 경로",
     )
     parser.add_argument(
-        "--output", default="data/eval/qa_pairs.json",
+        "--output",
+        default="data/eval/qa_pairs.json",
         help="출력 JSON 경로",
     )
     parser.add_argument("--count", type=int, default=100, help="목표 QA 쌍 수")

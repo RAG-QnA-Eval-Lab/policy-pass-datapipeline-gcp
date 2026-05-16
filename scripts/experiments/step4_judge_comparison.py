@@ -64,9 +64,7 @@ def main() -> Path:
     return output_path
 
 
-def _align_samples(
-    primary_results: list[dict], expensive_results: list[dict]
-) -> list[tuple[dict, dict]]:
+def _align_samples(primary_results: list[dict], expensive_results: list[dict]) -> list[tuple[dict, dict]]:
     expensive_map: dict[str, dict] = {}
     for s in expensive_results:
         key = f"{s.get('condition', '')}_{s.get('id', '')}"
@@ -121,7 +119,12 @@ def _compute_agreement_metrics(pairs: list[tuple[dict, dict]]) -> dict:
 
         logger.info(
             "  %s: τ=%.3f, ρ=%.3f, MAE=%.3f, Perfect=%.1f%%, Class=%.1f%%",
-            metric, tau, rho, mae, perfect * 100, class_agr * 100,
+            metric,
+            tau,
+            rho,
+            mae,
+            perfect * 100,
+            class_agr * 100,
         )
 
     return result

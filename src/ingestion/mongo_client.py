@@ -109,12 +109,7 @@ class PolicyMetadataStore:
         return self.policies.find_one({"policy_id": policy_id}, {"_id": 0})
 
     def find_by_category(self, category: str, skip: int = 0, limit: int = 100) -> list[dict]:
-        cursor = (
-            self.policies.find({"category": category}, {"_id": 0})
-            .sort("updated_at", -1)
-            .skip(skip)
-            .limit(limit)
-        )
+        cursor = self.policies.find({"category": category}, {"_id": 0}).sort("updated_at", -1).skip(skip).limit(limit)
         return list(cursor)
 
     def list_all(self, skip: int = 0, limit: int = 100) -> list[dict]:
@@ -193,15 +188,17 @@ class PolicyMetadataStore:
         errors: list[dict] | None = None,
     ) -> None:
         """수집 이력 기록."""
-        self.ingestion_logs.insert_one({
-            "source": source,
-            "collected_count": collected_count,
-            "valid_count": valid_count,
-            "status": status,
-            "gcs_paths": gcs_paths or [],
-            "errors": errors or [],
-            "created_at": datetime.now(timezone.utc).isoformat(),
-        })
+        self.ingestion_logs.insert_one(
+            {
+                "source": source,
+                "collected_count": collected_count,
+                "valid_count": valid_count,
+                "status": status,
+                "gcs_paths": gcs_paths or [],
+                "errors": errors or [],
+                "created_at": datetime.now(timezone.utc).isoformat(),
+            }
+        )
 
     def log_api_usage(self, record: dict) -> None:
         """LLM API 사용량/비용 로그 기록."""
@@ -214,12 +211,14 @@ class PolicyMetadataStore:
 
         pipeline = [
             {"$sort": {"created_at": -1}},
-            {"$group": {
-                "_id": "$source",
-                "last_run": {"$first": {"$ifNull": ["$created_at", "$finished_at"]}},
-                "status": {"$first": "$status"},
-                "count": {"$first": {"$ifNull": ["$valid_count", {"$ifNull": ["$total", "$collected_count"]}]}},
-            }},
+            {
+                "$group": {
+                    "_id": "$source",
+                    "last_run": {"$first": {"$ifNull": ["$created_at", "$finished_at"]}},
+                    "status": {"$first": "$status"},
+                    "count": {"$first": {"$ifNull": ["$valid_count", {"$ifNull": ["$total", "$collected_count"]}]}},
+                }
+            },
         ]
         sources = {
             doc["_id"]: {"last_run": doc.get("last_run"), "status": doc.get("status"), "count": doc.get("count", 0)}

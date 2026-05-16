@@ -47,9 +47,7 @@ class TestBuildIndexFromDirectory:
             "category": "housing",
         }
         (tmp_path / "input").mkdir()
-        (tmp_path / "input" / "test.json").write_text(
-            json.dumps([policy], ensure_ascii=False), encoding="utf-8"
-        )
+        (tmp_path / "input" / "test.json").write_text(json.dumps([policy], ensure_ascii=False), encoding="utf-8")
 
         mock_embed.return_value = [[0.1] * 128]
         output_dir = tmp_path / "output"
@@ -156,11 +154,13 @@ class TestMongoClient:
         store._client = MagicMock()
 
         with patch.object(type(store), "policies", new_callable=lambda: property(lambda self: mock_collection)):
-            count = store.upsert_policies_batch([
-                {"policy_id": "P1", "title": "정책1"},
-                {"policy_id": "P2", "title": "정책2"},
-                {"policy_id": "P3", "title": "정책3"},
-            ])
+            count = store.upsert_policies_batch(
+                [
+                    {"policy_id": "P1", "title": "정책1"},
+                    {"policy_id": "P2", "title": "정책2"},
+                    {"policy_id": "P3", "title": "정책3"},
+                ]
+            )
 
         mock_collection.bulk_write.assert_called_once()
         assert count == 3
@@ -177,10 +177,12 @@ class TestMongoClient:
         store._client = MagicMock()
 
         with patch.object(type(store), "gcs_assets", new_callable=lambda: property(lambda self: mock_collection)):
-            count = store.upsert_gcs_assets_batch([
-                {"gcs_uri": "gs://bucket/eval/qa_pairs.json", "asset_type": "qa_dataset"},
-                {"gcs_uri": "gs://bucket/index/faiss.index", "asset_type": "index_artifact"},
-            ])
+            count = store.upsert_gcs_assets_batch(
+                [
+                    {"gcs_uri": "gs://bucket/eval/qa_pairs.json", "asset_type": "qa_dataset"},
+                    {"gcs_uri": "gs://bucket/index/faiss.index", "asset_type": "index_artifact"},
+                ]
+            )
 
         mock_collection.bulk_write.assert_called_once()
         assert count == 2
@@ -221,9 +223,7 @@ class TestMongoClient:
         mock_collection = MagicMock()
         store._client = MagicMock()
 
-        with patch.object(
-            type(store), "ingestion_logs", new_callable=lambda: property(lambda self: mock_collection)
-        ):
+        with patch.object(type(store), "ingestion_logs", new_callable=lambda: property(lambda self: mock_collection)):
             store.log_ingestion(source="data_portal", collected_count=100, valid_count=95)
 
         mock_collection.insert_one.assert_called_once()

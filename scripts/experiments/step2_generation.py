@@ -116,32 +116,36 @@ def main(resume: bool = False) -> Path:
                     purpose="generation",
                 )
 
-                results[cond_key].append({
-                    "id": sample_id,
-                    "question": question,
-                    "ground_truth": ground_truth,
-                    "answer": llm_resp.content,
-                    "contexts": contexts,
-                    "model": model_id,
-                    "strategy": "no_rag" if is_no_rag else DEFAULT_STRATEGY,
-                    "retrieval_latency": retrieval_latency,
-                    "generation_latency": generation_latency,
-                    "prompt_tokens": llm_resp.prompt_tokens,
-                    "completion_tokens": llm_resp.completion_tokens,
-                    "total_tokens": llm_resp.total_tokens,
-                })
+                results[cond_key].append(
+                    {
+                        "id": sample_id,
+                        "question": question,
+                        "ground_truth": ground_truth,
+                        "answer": llm_resp.content,
+                        "contexts": contexts,
+                        "model": model_id,
+                        "strategy": "no_rag" if is_no_rag else DEFAULT_STRATEGY,
+                        "retrieval_latency": retrieval_latency,
+                        "generation_latency": generation_latency,
+                        "prompt_tokens": llm_resp.prompt_tokens,
+                        "completion_tokens": llm_resp.completion_tokens,
+                        "total_tokens": llm_resp.total_tokens,
+                    }
+                )
 
             except Exception:
                 logger.exception("[%s] %s — 생성 실패", cond_key, sample_id)
-                results[cond_key].append({
-                    "id": sample_id,
-                    "question": question,
-                    "ground_truth": ground_truth,
-                    "answer": "",
-                    "contexts": contexts,
-                    "model": model_id,
-                    "error": True,
-                })
+                results[cond_key].append(
+                    {
+                        "id": sample_id,
+                        "question": question,
+                        "ground_truth": ground_truth,
+                        "answer": "",
+                        "contexts": contexts,
+                        "model": model_id,
+                        "error": True,
+                    }
+                )
 
             done += 1
             if done % CHECKPOINT_INTERVAL == 0:
