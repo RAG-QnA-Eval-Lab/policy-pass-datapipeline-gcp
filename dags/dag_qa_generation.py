@@ -133,19 +133,21 @@ def qa_generation():
                     }
                 },
             )
-            store.upsert_qa_dataset({
-                "dataset_id": dataset_id,
-                "gcs_uri": gcs_uri,
-                "version": data.get("version"),
-                "generated_at": data.get("generated_at"),
-                "model": data.get("model"),
-                "domain": data.get("domain"),
-                "categories": data.get("categories"),
-                "total_count": data.get("total_count"),
-                "difficulty_distribution": data.get("difficulty_distribution"),
-                "qa_type_distribution": data.get("qa_type_distribution"),
-                "prompt": data.get("prompt"),
-            })
+            store.upsert_qa_dataset(
+                {
+                    "dataset_id": dataset_id,
+                    "gcs_uri": gcs_uri,
+                    "version": data.get("version"),
+                    "generated_at": data.get("generated_at"),
+                    "model": data.get("model"),
+                    "domain": data.get("domain"),
+                    "categories": data.get("categories"),
+                    "total_count": data.get("total_count"),
+                    "difficulty_distribution": data.get("difficulty_distribution"),
+                    "qa_type_distribution": data.get("qa_type_distribution"),
+                    "prompt": data.get("prompt"),
+                }
+            )
             qa_count = store.sync_qa_pairs(data.get("samples", []), dataset_id)
         finally:
             store.close()

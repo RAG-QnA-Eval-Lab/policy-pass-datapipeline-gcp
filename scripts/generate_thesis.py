@@ -7,6 +7,7 @@ Usage:
 Output:
     docs/졸업논문_김대현_2026_완성.docx
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -16,7 +17,7 @@ from docx.enum.section import WD_ORIENT
 from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
-from docx.shared import Cm, Pt
+from docx.shared import Cm
 
 TEMPLATE = Path("docs/졸업논문_김대현_2026.docx")
 OUTPUT = Path("docs/졸업논문_김대현_2026_완성.docx")
@@ -141,8 +142,7 @@ class ThesisWriter:
     # ── header ─────────────────────────────────────────
     def write_header(self):
         self.p(
-            "RAG 응답 모니터링을 위한 비용 효율적 LLM-as-a-Judge "
-            "파이프라인 구축 및 성능 비교 분석",
+            "RAG 응답 모니터링을 위한 비용 효율적 LLM-as-a-Judge 파이프라인 구축 및 성능 비교 분석",
             S_TITLE,
         )
         self.p(
@@ -260,10 +260,7 @@ class ThesisWriter:
             "3. 파인튜닝 없이 경량 상용 모델(GPT-4o-mini)을 Judge로 활용하는 방안의 비용 "
             "효율성을 고비용 모델(Gemini 3.1 Pro) 대비 검증한다."
         )
-        self.item(
-            "4. RAG 컨텍스트 순서에 의한 Position Bias를 완화하기 위한 2회 평균 기법의 "
-            "효과를 실증한다."
-        )
+        self.item("4. RAG 컨텍스트 순서에 의한 Position Bias를 완화하기 위한 2회 평균 기법의 효과를 실증한다.")
         self.p(
             "연구 범위는 한국어 텍스트 기반 정부 정책 문서에 한정하며, 100쌍의 QA 데이터셋을 "
             "사용하여 5개 LLM(GPT-4o, GPT-4o-mini, Claude Sonnet, Gemini Flash, Llama3)의 "
@@ -522,10 +519,7 @@ class ThesisWriter:
         )
 
         self.h3("3.5.2. Stage 2: LLM-as-a-Judge 정성 평가")
-        self.p(
-            "G-Eval [4] 방식으로 LLM을 Judge로 활용하여 3가지 차원을 1~5점 정수 척도로 "
-            "평가한다."
-        )
+        self.p("G-Eval [4] 방식으로 LLM을 Judge로 활용하여 3가지 차원을 1~5점 정수 척도로 평가한다.")
         self.bullet("인용 정확도(Citation Accuracy): 답변이 검색된 컨텍스트를 정확히 인용하는가;")
         self.bullet("완결성(Completeness): 질문에 대한 답변이 충분히 포괄적인가;")
         self.bullet("가독성(Readability): 답변의 구조와 표현이 이해하기 쉬운가.")
@@ -615,10 +609,7 @@ class ThesisWriter:
 
         # 4.2
         self.h2("4.2. 검색 전략별 성능 비교")
-        self.p(
-            "4가지 검색 전략의 성능을 RAGAS Context Precision과 Context Recall로 "
-            "비교한다(표 6)."
-        )
+        self.p("4가지 검색 전략의 성능을 RAGAS Context Precision과 Context Recall로 비교한다(표 6).")
         self.table(
             ["전략", "Context Precision", "Context Recall", "Latency(s)"],
             [
@@ -673,9 +664,7 @@ class ThesisWriter:
         )
 
         self.h3("4.3.2. LLM Judge 정성 평가 결과")
-        self.p(
-            "GPT-4o-mini를 Judge로 활용한 정성 평가 결과를 비교한다(표 8)."
-        )
+        self.p("GPT-4o-mini를 Judge로 활용한 정성 평가 결과를 비교한다(표 8).")
         self.table(
             ["조건", "Citation Acc.", "Completeness", "Readability", "Average", "N"],
             [
@@ -748,7 +737,10 @@ class ThesisWriter:
                 ["입력 토큰 비용 비율", "13.3배", "GPT-4o-mini $0.15 vs Gemini 3.1 Pro $2.00 /1M"],
                 ["출력 토큰 비용 비율", "20.0배", "GPT-4o-mini $0.60 vs Gemini 3.1 Pro $12.00 /1M"],
             ],
-            caption="표 10. Judge 모델 비용-성능 비교 (GPT-4o-mini vs Gemini 3.1 Pro, N=267). 가격은 2026년 5월 공식 API 가격표 기준.",
+            caption=(
+                "표 10. Judge 모델 비용-성능 비교 (GPT-4o-mini vs Gemini 3.1 Pro, N=267)."
+                " 가격은 2026년 5월 공식 API 가격표 기준."
+            ),
         )
         self.p(
             "Class Agreement Rate가 90.3%로, 3등급 분류(low/mid/high) 기준 10건 중 9건에서 "
@@ -910,15 +902,8 @@ class ThesisWriter:
                 "Proceedings of the 32nd International ACM SIGIR Conference on "
                 "Research and Development in Information Retrieval, pp. 758-759, 2009"
             ),
-            (
-                "Nogueira, R., Cho, K. "
-                "Passage Re-Ranking with BERT. "
-                "arXiv preprint arXiv:1901.04085, 2019"
-            ),
-            (
-                "RAGAS Documentation. RAGAS v0.4 API Reference. "
-                "https://docs.ragas.io/en/stable/, 2024"
-            ),
+            ("Nogueira, R., Cho, K. Passage Re-Ranking with BERT. arXiv preprint arXiv:1901.04085, 2019"),
+            ("RAGAS Documentation. RAGAS v0.4 API Reference. https://docs.ragas.io/en/stable/, 2024"),
         ]
 
         for i, ref in enumerate(refs, 1):

@@ -108,16 +108,18 @@ def generate(
     )
     if mongo:
         try:
-            mongo.log_api_usage({
-                "request_id": request_id,
-                "model": resp.model,
-                "tokens_in": usage.prompt_tokens,
-                "tokens_out": usage.completion_tokens,
-                "cost_usd": estimated_cost,
-                "latency_ms": total_latency_ms,
-                "strategy": resp.search_strategy,
-                "status": "success",
-            })
+            mongo.log_api_usage(
+                {
+                    "request_id": request_id,
+                    "model": resp.model,
+                    "tokens_in": usage.prompt_tokens,
+                    "tokens_out": usage.completion_tokens,
+                    "cost_usd": estimated_cost,
+                    "latency_ms": total_latency_ms,
+                    "strategy": resp.search_strategy,
+                    "status": "success",
+                }
+            )
         except Exception as exc:
             logger.debug("api_usage_logs insert failed: %s", exc)
 

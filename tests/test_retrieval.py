@@ -71,9 +71,7 @@ class TestVectorStore:
         with pytest.raises(FileNotFoundError):
             load_index(tmp_path / "missing.index", tmp_path / "missing.pkl")
 
-    def test_search_returns_results(
-        self, faiss_index_and_metadata: tuple[faiss.IndexFlatL2, list[dict]]
-    ) -> None:
+    def test_search_returns_results(self, faiss_index_and_metadata: tuple[faiss.IndexFlatL2, list[dict]]) -> None:
         index, metadata = faiss_index_and_metadata
         query_vec = np.random.default_rng(99).standard_normal(8).astype(np.float32).tolist()
         results = search(query_vec, index, metadata, top_k=3)
@@ -82,9 +80,7 @@ class TestVectorStore:
         assert results[0].rank == 0
         assert results[1].rank == 1
 
-    def test_search_top_k_exceeds_total(
-        self, faiss_index_and_metadata: tuple[faiss.IndexFlatL2, list[dict]]
-    ) -> None:
+    def test_search_top_k_exceeds_total(self, faiss_index_and_metadata: tuple[faiss.IndexFlatL2, list[dict]]) -> None:
         index, metadata = faiss_index_and_metadata
         query_vec = np.random.default_rng(99).standard_normal(8).astype(np.float32).tolist()
         results = search(query_vec, index, metadata, top_k=100)
@@ -232,9 +228,7 @@ class TestPipeline:
 
     @patch("src.retrieval.pipeline.rerank")
     @patch("src.retrieval.pipeline.embed_texts")
-    def test_pipeline_hybrid_rerank(
-        self, mock_embed: MagicMock, mock_rerank: MagicMock, index_dir: Path
-    ) -> None:
+    def test_pipeline_hybrid_rerank(self, mock_embed: MagicMock, mock_rerank: MagicMock, index_dir: Path) -> None:
         from src.retrieval.pipeline import RetrievalPipeline, SearchStrategy
 
         mock_embed.return_value = [np.random.default_rng(42).standard_normal(8).astype(np.float32).tolist()]

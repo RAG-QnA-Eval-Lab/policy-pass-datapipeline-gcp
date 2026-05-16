@@ -147,10 +147,7 @@ def _build_faiss_index(
     index = faiss.IndexFlatL2(dim)
     index.add(vectors)
 
-    metadata = [
-        {"content": chunk.content, **chunk.metadata}
-        for chunk in chunks
-    ]
+    metadata = [{"content": chunk.content, **chunk.metadata} for chunk in chunks]
     return index, metadata
 
 

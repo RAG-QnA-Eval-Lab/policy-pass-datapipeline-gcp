@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 _ragas_llm = None
 _ragas_embeddings = None
 
+
 def _make_llm():
     global _ragas_llm  # noqa: PLW0603
     if _ragas_llm is not None:
@@ -67,9 +68,7 @@ def evaluate_ragas(
 
         faithfulness = Faithfulness(llm=llm)
         try:
-            r = await faithfulness.ascore(
-                user_input=question, response=answer, retrieved_contexts=contexts
-            )
+            r = await faithfulness.ascore(user_input=question, response=answer, retrieved_contexts=contexts)
             scores["faithfulness"] = float(r.value)
         except Exception:
             logger.exception("Faithfulness 평가 실패")
@@ -85,9 +84,7 @@ def evaluate_ragas(
 
         precision = ContextPrecision(llm=llm)
         try:
-            r = await precision.ascore(
-                user_input=question, reference=ground_truth, retrieved_contexts=contexts
-            )
+            r = await precision.ascore(user_input=question, reference=ground_truth, retrieved_contexts=contexts)
             scores["context_precision"] = float(r.value)
         except Exception:
             logger.exception("ContextPrecision 평가 실패")
@@ -95,9 +92,7 @@ def evaluate_ragas(
 
         recall = ContextRecall(llm=llm)
         try:
-            r = await recall.ascore(
-                user_input=question, retrieved_contexts=contexts, reference=ground_truth
-            )
+            r = await recall.ascore(user_input=question, retrieved_contexts=contexts, reference=ground_truth)
             scores["context_recall"] = float(r.value)
         except Exception:
             logger.exception("ContextRecall 평가 실패")

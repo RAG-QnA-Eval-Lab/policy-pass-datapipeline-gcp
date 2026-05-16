@@ -21,6 +21,7 @@ def _get_encoder() -> tiktoken.Encoding:
         _encoder = tiktoken.get_encoding("cl100k_base")
     return _encoder
 
+
 SECTION_PATTERNS = re.compile(
     r"^(정책명|요약|상세설명|신청자격|지원내용|신청방법|신청기간|주관부처|지역)[:：]",
     re.MULTILINE,

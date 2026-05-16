@@ -73,10 +73,21 @@ def verify_data_structure() -> bool:
         sample = items[0]
         print("\n  --- 첫 번째 정책 주요 필드 ---")
         key_fields = [
-            "plcyNo", "plcyNm", "lclsfNm", "mclsfNm", "plcyExplnCn",
-            "plcySprtCn", "sprvsnInstCdNm", "operInstCdNm",
-            "sprtTrgtMinAge", "sprtTrgtMaxAge", "bizPrdBgngYmd", "bizPrdEndYmd",
-            "aplyUrlAddr", "refUrlAddr1", "zipCd",
+            "plcyNo",
+            "plcyNm",
+            "lclsfNm",
+            "mclsfNm",
+            "plcyExplnCn",
+            "plcySprtCn",
+            "sprvsnInstCdNm",
+            "operInstCdNm",
+            "sprtTrgtMinAge",
+            "sprtTrgtMaxAge",
+            "bizPrdBgngYmd",
+            "bizPrdEndYmd",
+            "aplyUrlAddr",
+            "refUrlAddr1",
+            "zipCd",
         ]
         for key in key_fields:
             val = sample.get(key, "(없음)")
@@ -144,7 +155,7 @@ def verify_search() -> bool:
         for i, item in enumerate(items):
             title = item.get("plcyNm", "(제목 없음)")
             cat = item.get("mclsfNm", "")
-            print(f"    [{i+1}] [{cat}] {title}")
+            print(f"    [{i + 1}] [{cat}] {title}")
 
         if total > 0 and len(items) > 0:
             print("  [OK] 카테고리 필터 정상")

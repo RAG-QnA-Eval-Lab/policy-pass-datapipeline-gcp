@@ -62,10 +62,12 @@ class MonitoringClient:
             interval = monitoring_v3.TimeInterval(
                 {"end_time": {"seconds": seconds, "nanos": nanos}},
             )
-            point = monitoring_v3.Point({
-                "interval": interval,
-                "value": {"double_value": float(value)},
-            })
+            point = monitoring_v3.Point(
+                {
+                    "interval": interval,
+                    "value": {"double_value": float(value)},
+                }
+            )
             series.points = [point]
             client.create_time_series(name=self._project_name, time_series=[series])
         except Exception as exc:

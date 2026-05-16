@@ -105,33 +105,37 @@ def _generate_group(
                 )
 
             usage = response.llm_response
-            outputs.append({
-                **sample,
-                "model": response.model,
-                "strategy": response.search_strategy,
-                "answer": response.answer,
-                "contexts": [source.get("content", "") for source in response.sources],
-                "sources": response.sources,
-                "generation_latency": response.generation_latency,
-                "retrieval_latency": response.retrieval_latency,
-                "tokens": {
-                    "prompt": usage.prompt_tokens if usage else 0,
-                    "completion": usage.completion_tokens if usage else 0,
-                    "total": usage.total_tokens if usage else 0,
-                },
-                "elapsed": round(time.monotonic() - started, 3),
-            })
+            outputs.append(
+                {
+                    **sample,
+                    "model": response.model,
+                    "strategy": response.search_strategy,
+                    "answer": response.answer,
+                    "contexts": [source.get("content", "") for source in response.sources],
+                    "sources": response.sources,
+                    "generation_latency": response.generation_latency,
+                    "retrieval_latency": response.retrieval_latency,
+                    "tokens": {
+                        "prompt": usage.prompt_tokens if usage else 0,
+                        "completion": usage.completion_tokens if usage else 0,
+                        "total": usage.total_tokens if usage else 0,
+                    },
+                    "elapsed": round(time.monotonic() - started, 3),
+                }
+            )
         except Exception as exc:
             logger.exception("[%s] generation failed: %s", group_name, sample_id)
-            outputs.append({
-                **sample,
-                "model": config["model"],
-                "strategy": config["strategy"],
-                "answer": "",
-                "contexts": [],
-                "sources": [],
-                "error": str(exc),
-            })
+            outputs.append(
+                {
+                    **sample,
+                    "model": config["model"],
+                    "strategy": config["strategy"],
+                    "answer": "",
+                    "contexts": [],
+                    "sources": [],
+                    "error": str(exc),
+                }
+            )
 
     return outputs
 

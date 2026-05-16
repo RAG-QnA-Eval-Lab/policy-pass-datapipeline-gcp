@@ -143,8 +143,7 @@ def setup_logging(step_name: str, output_dir: Path | None = None) -> None:
     root.setLevel(logging.INFO)
 
     has_step_handler = any(
-        isinstance(h, logging.FileHandler) and getattr(h, "_exp_step", None) == step_name
-        for h in root.handlers
+        isinstance(h, logging.FileHandler) and getattr(h, "_exp_step", None) == step_name for h in root.handlers
     )
     if not has_step_handler:
         fh = logging.FileHandler(log_file, encoding="utf-8")

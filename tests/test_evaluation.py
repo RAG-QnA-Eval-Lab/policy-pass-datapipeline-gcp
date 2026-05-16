@@ -99,19 +99,23 @@ class TestRagasMetrics:
         mock_metric = MagicMock()
         mock_metric.ascore = AsyncMock(return_value=mock_result)
 
-        with patch.dict("sys.modules", {
-            "ragas": MagicMock(),
-            "ragas.metrics": MagicMock(),
-            "ragas.metrics.collections": MagicMock(
-                Faithfulness=lambda **kw: mock_metric,
-                AnswerRelevancy=lambda **kw: mock_metric,
-                ContextPrecision=lambda **kw: mock_metric,
-                ContextRecall=lambda **kw: mock_metric,
-            ),
-        }):
+        with patch.dict(
+            "sys.modules",
+            {
+                "ragas": MagicMock(),
+                "ragas.metrics": MagicMock(),
+                "ragas.metrics.collections": MagicMock(
+                    Faithfulness=lambda **kw: mock_metric,
+                    AnswerRelevancy=lambda **kw: mock_metric,
+                    ContextPrecision=lambda **kw: mock_metric,
+                    ContextRecall=lambda **kw: mock_metric,
+                ),
+            },
+        ):
             import importlib
 
             import src.evaluation.ragas_metrics as rm
+
             importlib.reload(rm)
             rm._ragas_llm = MagicMock()
             rm._ragas_embeddings = MagicMock()
@@ -135,19 +139,23 @@ class TestRagasMetrics:
         mock_metric_fail = MagicMock()
         mock_metric_fail.ascore = AsyncMock(side_effect=Exception("metric error"))
 
-        with patch.dict("sys.modules", {
-            "ragas": MagicMock(),
-            "ragas.metrics": MagicMock(),
-            "ragas.metrics.collections": MagicMock(
-                Faithfulness=lambda **kw: mock_metric_ok,
-                AnswerRelevancy=lambda **kw: mock_metric_fail,
-                ContextPrecision=lambda **kw: mock_metric_ok,
-                ContextRecall=lambda **kw: mock_metric_fail,
-            ),
-        }):
+        with patch.dict(
+            "sys.modules",
+            {
+                "ragas": MagicMock(),
+                "ragas.metrics": MagicMock(),
+                "ragas.metrics.collections": MagicMock(
+                    Faithfulness=lambda **kw: mock_metric_ok,
+                    AnswerRelevancy=lambda **kw: mock_metric_fail,
+                    ContextPrecision=lambda **kw: mock_metric_ok,
+                    ContextRecall=lambda **kw: mock_metric_fail,
+                ),
+            },
+        ):
             import importlib
 
             import src.evaluation.ragas_metrics as rm
+
             importlib.reload(rm)
             rm._ragas_llm = MagicMock()
             rm._ragas_embeddings = MagicMock()
@@ -252,14 +260,18 @@ class TestSafetyMetrics:
 
         mock_test_case_cls = MagicMock()
 
-        with patch.dict("sys.modules", {
-            "deepeval": MagicMock(),
-            "deepeval.metrics": MagicMock(HallucinationMetric=lambda **kw: mock_metric),
-            "deepeval.test_case": MagicMock(LLMTestCase=mock_test_case_cls),
-        }):
+        with patch.dict(
+            "sys.modules",
+            {
+                "deepeval": MagicMock(),
+                "deepeval.metrics": MagicMock(HallucinationMetric=lambda **kw: mock_metric),
+                "deepeval.test_case": MagicMock(LLMTestCase=mock_test_case_cls),
+            },
+        ):
             import importlib
 
             import src.evaluation.safety_metrics as sm
+
             importlib.reload(sm)
 
             result = sm.evaluate_safety(sample_question, sample_contexts, sample_answer)
@@ -268,16 +280,18 @@ class TestSafetyMetrics:
         assert result.hallucination_score == 0.15
 
     def test_evaluate_safety_failure(self, sample_question, sample_contexts, sample_answer):
-        with patch.dict("sys.modules", {
-            "deepeval": MagicMock(),
-            "deepeval.metrics": MagicMock(
-                HallucinationMetric=MagicMock(side_effect=Exception("deepeval error"))
-            ),
-            "deepeval.test_case": MagicMock(),
-        }):
+        with patch.dict(
+            "sys.modules",
+            {
+                "deepeval": MagicMock(),
+                "deepeval.metrics": MagicMock(HallucinationMetric=MagicMock(side_effect=Exception("deepeval error"))),
+                "deepeval.test_case": MagicMock(),
+            },
+        ):
             import importlib
 
             import src.evaluation.safety_metrics as sm
+
             importlib.reload(sm)
 
             result = sm.evaluate_safety(sample_question, sample_contexts, sample_answer)
@@ -357,8 +371,11 @@ class TestRAGEvaluator:
 
         samples = [
             {
-                "id": f"q{i:03d}", "question": f"질문{i}", "answer": f"답변{i}",
-                "ground_truth": f"정답{i}", "contexts": [f"ctx{i}"],
+                "id": f"q{i:03d}",
+                "question": f"질문{i}",
+                "answer": f"답변{i}",
+                "ground_truth": f"정답{i}",
+                "contexts": [f"ctx{i}"],
             }
             for i in range(10)
         ]
@@ -386,12 +403,16 @@ class TestReport:
                     "question": "질문",
                     "eval_result": {
                         "ragas": {
-                            "faithfulness": 0.9, "answer_relevancy": 0.8,
-                            "context_precision": 0.7, "context_recall": 0.6,
+                            "faithfulness": 0.9,
+                            "answer_relevancy": 0.8,
+                            "context_precision": 0.7,
+                            "context_recall": 0.6,
                         },
                         "judge": {
-                            "citation_accuracy": 4.0, "completeness": 5.0,
-                            "readability": 4.0, "average": 4.33,
+                            "citation_accuracy": 4.0,
+                            "completeness": 5.0,
+                            "readability": 4.0,
+                            "average": 4.33,
                         },
                         "safety": {"hallucination_score": 0.1},
                         "latency": 2.5,
@@ -419,8 +440,10 @@ class TestReport:
                     "id": "q002",
                     "eval_result": {
                         "ragas": {
-                            "faithfulness": 0.8, "answer_relevancy": None,
-                            "context_precision": None, "context_recall": None,
+                            "faithfulness": 0.8,
+                            "answer_relevancy": None,
+                            "context_precision": None,
+                            "context_recall": None,
                         },
                         "judge": None,
                         "safety": None,

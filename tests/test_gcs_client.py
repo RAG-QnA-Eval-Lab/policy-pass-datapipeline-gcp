@@ -64,9 +64,7 @@ class TestDownloadJson:
     def test_download_json_parses_content(self, gcs, mock_storage):
         blob = MagicMock()
         mock_storage["bucket"].blob.return_value = blob
-        blob.download_as_text.return_value = json.dumps(
-            [{"policy_id": "p1"}], ensure_ascii=False
-        )
+        blob.download_as_text.return_value = json.dumps([{"policy_id": "p1"}], ensure_ascii=False)
 
         result = gcs.download_json("policies/raw/test.json")
 

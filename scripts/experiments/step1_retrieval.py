@@ -80,14 +80,16 @@ def main(resume: bool = False) -> Path:
 
             ragas_result = _evaluate_context_metrics(question, contexts, ground_truth)
 
-            results[strat_name].append({
-                "id": sample_id,
-                "question": question,
-                "contexts": contexts,
-                "retrieval_latency": t.elapsed,
-                "context_precision": ragas_result.get("context_precision"),
-                "context_recall": ragas_result.get("context_recall"),
-            })
+            results[strat_name].append(
+                {
+                    "id": sample_id,
+                    "question": question,
+                    "contexts": contexts,
+                    "retrieval_latency": t.elapsed,
+                    "context_precision": ragas_result.get("context_precision"),
+                    "context_recall": ragas_result.get("context_recall"),
+                }
+            )
 
             done += 1
             if done % CHECKPOINT_INTERVAL == 0:

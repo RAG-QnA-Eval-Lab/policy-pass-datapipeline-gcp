@@ -54,8 +54,6 @@ def search_bm25(
         doc = documents[idx]
         content = doc.get("content", "")
         meta = {k: v for k, v in doc.items() if k != "content"}
-        results.append(
-            SearchResult(content=content, score=float(scores[idx]), metadata=meta, rank=len(results))
-        )
+        results.append(SearchResult(content=content, score=float(scores[idx]), metadata=meta, rank=len(results)))
 
     return results

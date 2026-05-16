@@ -75,9 +75,7 @@ with st.sidebar:
     )
 
     st.session_state[KEY_TOP_K] = st.slider("검색 결과 수 (top_k)", 1, 20, st.session_state[KEY_TOP_K])
-    st.session_state[KEY_TEMPERATURE] = st.slider(
-        "Temperature", 0.0, 2.0, st.session_state[KEY_TEMPERATURE], step=0.1
-    )
+    st.session_state[KEY_TEMPERATURE] = st.slider("Temperature", 0.0, 2.0, st.session_state[KEY_TEMPERATURE], step=0.1)
     st.session_state[KEY_NO_RAG] = st.toggle("RAG 없이 답변", value=st.session_state[KEY_NO_RAG])
 
     if st.button("대화 초기화", use_container_width=True):
@@ -143,11 +141,13 @@ if pending_query:
             )
             if resp:
                 render_answer(resp)
-                messages.append({
-                    "role": "assistant",
-                    "content": resp.get("answer", ""),
-                    "response_data": resp,
-                })
+                messages.append(
+                    {
+                        "role": "assistant",
+                        "content": resp.get("answer", ""),
+                        "response_data": resp,
+                    }
+                )
             else:
                 st.error("답변 생성에 실패했습니다. API 서버를 확인하세요.")
                 messages.append({"role": "assistant", "content": "답변 생성에 실패했습니다."})

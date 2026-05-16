@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+import pytest
+
+pytest.importorskip("streamlit", reason="streamlit not installed — skipping UI tests")
+
 from unittest.mock import MagicMock, patch
 
 import httpx
@@ -98,9 +102,7 @@ class TestAPIClient:
 
     @patch.object(httpx.Client, "post")
     def test_generate_failure_returns_none(self, mock_post: MagicMock) -> None:
-        mock_post.side_effect = httpx.HTTPStatusError(
-            "429", request=MagicMock(), response=MagicMock(status_code=429)
-        )
+        mock_post.side_effect = httpx.HTTPStatusError("429", request=MagicMock(), response=MagicMock(status_code=429))
         client = self._make_client()
         assert client.generate("질문") is None
 
@@ -215,8 +217,10 @@ class TestMetricsDisplayHelpers:
             {
                 "id": "q1",
                 "ragas": {
-                    "faithfulness": 0.8, "answer_relevancy": 0.9,
-                    "context_precision": 0.7, "context_recall": 0.85,
+                    "faithfulness": 0.8,
+                    "answer_relevancy": 0.9,
+                    "context_precision": 0.7,
+                    "context_recall": 0.85,
                 },
                 "judge": {"average": 0.75},
                 "safety": {"hallucination_score": 0.1},
