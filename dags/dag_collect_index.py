@@ -32,8 +32,8 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 RAW_OUTPUT_DIR = REPO_ROOT / "data" / "policies" / "raw"
 
-_AWS_DEPLOY_OWNER = os.environ.get("AWS_DEPLOY_OWNER", "Daehyun-Bigbread")
-_AWS_DEPLOY_REPO = os.environ.get("AWS_DEPLOY_REPO", "RAG-QA-pipeline-AWS")
+_AWS_DEPLOY_OWNER = os.environ.get("AWS_DEPLOY_OWNER", "RAG-QnA-Eval-Lab")
+_AWS_DEPLOY_REPO = os.environ.get("AWS_DEPLOY_REPO", "policy-pass-infra-aws")
 
 
 @dag(
