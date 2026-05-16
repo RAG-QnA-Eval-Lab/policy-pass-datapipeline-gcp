@@ -44,6 +44,7 @@ crawl = [
     "httpx>=0.27",
     "beautifulsoup4>=4.12",
 ]
+aws = ["boto3>=1.34"]
 
 [build-system]
 requires = ["setuptools>=75.0"]
