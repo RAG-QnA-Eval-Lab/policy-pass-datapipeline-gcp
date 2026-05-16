@@ -23,8 +23,8 @@ DEFAULT_ARGS = {
     "on_failure_callback": on_failure_callback,
 }
 
-_AWS_DEPLOY_OWNER = os.environ.get("AWS_DEPLOY_OWNER", "Daehyun-Bigbread")
-_AWS_DEPLOY_REPO = os.environ.get("AWS_DEPLOY_REPO", "RAG-QA-pipeline-AWS")
+_AWS_DEPLOY_OWNER = os.environ.get("AWS_DEPLOY_OWNER", "RAG-QnA-Eval-Lab")
+_AWS_DEPLOY_REPO = os.environ.get("AWS_DEPLOY_REPO", "policy-pass-infra-aws")
 
 
 @dag(
